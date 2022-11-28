@@ -10,6 +10,7 @@ import { GetSet, Vector2d } from './types';
 import { Group } from './Group';
 import { Shape, shapes } from './Shape';
 import { _registerNode } from './Global';
+import rbush from './rbush';
 
 export interface LayerConfig extends ContainerConfig {
   clearBeforeDraw?: boolean;
@@ -354,34 +355,23 @@ export class Layer extends Container<Group | Shape> {
     }
   }
   _getIntersection(pos: Vector2d): { shape?: Shape; antialiased?: boolean } {
-    const ratio = this.hitCanvas.pixelRatio;
-    const p = this.hitCanvas.context.getImageData(
-      Math.round(pos.x * ratio),
-      Math.round(pos.y * ratio),
-      1,
-      1
-    ).data;
-    const p3 = p[3];
+    const pixelRatio = this.canvas.getPixelRatio();
+    const x = Math.round(pos.x * pixelRatio);
+    const y = Math.round(pos.y * pixelRatio)
+    
+    const results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
 
-    // fully opaque pixel
-    if (p3 === 255) {
-      const colorKey = Util._rgbToHex(p[0], p[1], p[2]);
-      const shape = shapes[HASH + colorKey];
-      if (shape) {
-        return {
-          shape: shape,
-        };
-      }
+    if (!results) {
+      return {};
+    }
+    const rNode = results[results.length - 1];
+    const shape = shapes[rNode.id];
+    if (shape) {
       return {
-        antialiased: true,
-      };
-    } else if (p3 > 0) {
-      // antialiased pixel
-      return {
-        antialiased: true,
+        shape
       };
     }
-    // empty pixel
+
     return {};
   }
   drawScene(can?: SceneCanvas, top?: Node) {

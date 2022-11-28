@@ -6,6 +6,7 @@ import { GetSet, IRect } from './types';
 import { Shape } from './Shape';
 import { HitCanvas, SceneCanvas } from './Canvas';
 import { SceneContext } from './Context';
+import rbush from './rbush';
 
 export interface ContainerConfig extends NodeConfig {
   clearBeforeDraw?: boolean;
@@ -139,6 +140,32 @@ export abstract class Container<
     });
     this._requestDraw();
     // chainable
+    return this;
+  }
+  // 添加到 r-tree
+  addToRBush(child: Node<NodeConfig>) {
+    const clientRect = child.getClientRect();
+    if (!clientRect) {
+      return;
+    }
+    const matrix = child.getAbsoluteTransform().getMatrix();
+    const x = matrix[4];
+    const y = matrix[5];
+    
+    rbush.add({
+      minX: x,
+      minY: y,
+      maxX: x + clientRect.width,
+      maxY: y + clientRect.height,
+      id: child._id,
+    });
+  }
+
+  remove() {
+    if (this.hasChildren()) {
+      this.removeChildren();
+    }
+    super.remove();
     return this;
   }
   destroy() {

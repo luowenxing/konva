@@ -93,6 +93,7 @@
     "@parcel/transformer-image": "2.7.0",
     "@size-limit/preset-big-lib": "^8.0.0",
     "@types/mocha": "^9.1.1",
+    "@types/rbush": "^3.0.0",
     "canvas": "^2.9.3",
     "chai": "4.3.6",
     "filehound": "^1.17.6",
@@ -139,5 +140,8 @@
     "type": "git",
     "url": "git@git.woa.com:tencent-docs-next/konva.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "rbush": "^3.0.1"
+  }
 }

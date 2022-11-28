@@ -14,6 +14,7 @@ import { Stage } from './Stage';
 import { Context } from './Context';
 import { Shape } from './Shape';
 import { Layer } from './Layer';
+import rbush from './rbush';
 
 export type Filter = (this: Node, imageData: ImageData) => void;
 
@@ -846,7 +847,12 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
       parent.children.splice(this.index, 1);
       parent._setChildrenIndices();
       this.parent = null;
+      this.removeFromRBush();
     }
+  }
+  // 从 r-tree 移除
+  removeFromRBush() {
+    rbush.delete(this._id);
   }
   /**
    * remove and destroy a node. Kill it and delete forever! You should not reuse node after destroy().
@@ -1003,24 +1009,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     }
   }
   shouldDrawHit(top?: Node, skipDragCheck = false) {
-    if (top) {
-      return this._isVisible(top) && this._isListening(top);
-    }
-    var layer = this.getLayer();
-
-    var layerUnderDrag = false;
-    DD._dragElements.forEach((elem) => {
-      if (elem.dragStatus !== 'dragging') {
-        return;
-      } else if (elem.node.nodeType === 'Stage') {
-        layerUnderDrag = true;
-      } else if (elem.node.getLayer() === layer) {
-        layerUnderDrag = true;
-      }
-    });
-
-    var dragSkip = !skipDragCheck && !Konva.hitOnDragEnabled && layerUnderDrag;
-    return this.isListening() && this.isVisible() && !dragSkip;
+    return false;
   }
 
   /**

@@ -183,18 +183,7 @@ export class Shape<
 
   constructor(config?: Config) {
     super(config);
-    // set colorKey
-    let key: string;
-
-    while (true) {
-      key = Util.getRandomColor();
-      if (key && !(key in shapes)) {
-        break;
-      }
-    }
-
-    this.colorKey = key;
-    shapes[key] = this;
+    shapes[this._id] = this;
   }
 
   getContext() {

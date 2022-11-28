@@ -1,7 +1,7 @@
 {
-  "name": "konva",
+  "name": "@tencent/konva",
   "version": "8.3.14",
-  "author": "Anton Lavrenov",
+  "author": "Glory Yin",
   "files": [
     "README.md",
     "konva.js",
@@ -55,7 +55,9 @@
     "rollup": "rollup -c",
     "clean": "rm -rf ./lib && rm -rf ./types && rm -rf ./cmj && rm -rf ./test-build",
     "watch": "rollup -c -w",
-    "size": "size-limit"
+    "size": "size-limit",
+    "publish:patch": "npm version patch && npm run build && npm publish && git push --follow-tags",
+    "publish:beta": "npm version prerelease --preid beta && npm run build && npm publish --tag=beta && git push --follow-tags"
   },
   "targets": {
     "none": {}
@@ -135,7 +137,7 @@
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "git://github.com/konvajs/konva.git"
+    "url": "git@git.woa.com:tencent-docs-next/konva.git"
   },
   "license": "MIT"
 }

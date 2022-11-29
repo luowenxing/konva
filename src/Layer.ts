@@ -10,7 +10,7 @@ import { GetSet, Vector2d } from './types';
 import { Group } from './Group';
 import { Shape, shapes } from './Shape';
 import { _registerNode } from './Global';
-import rbush from './rbush';
+import rbush from './rbush-pool';
 
 export interface LayerConfig extends ContainerConfig {
   clearBeforeDraw?: boolean;

@@ -11,7 +11,7 @@ interface RNode extends BoundaryRect {
   id: number;
 }
 
-class KonvaRbush {
+class RBushPool {
   private rbush: RBush<RNode>;
   private rNodes = new Map<number, RNode>();
 
@@ -40,4 +40,4 @@ class KonvaRbush {
   }
 }
 
-export default new KonvaRbush();
+export default new RBushPool();

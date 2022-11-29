@@ -9,10 +9,10 @@
   var RBush__default = /*#__PURE__*/_interopDefaultLegacy(RBush);
 
   /*
-   * Konva JavaScript Framework v8.3.15-beta.0
+   * Konva JavaScript Framework v8.3.15-beta.1
    * http://konvajs.org/
    * Licensed under the MIT
-   * Date: Mon Nov 28 2022
+   * Date: Tue Nov 29 2022
    *
    * Original work Copyright (C) 2011 - 2013 by Eric Rowell (KineticJS)
    * Modified work Copyright (C) 2014 - present by Anton Lavrenov (Konva)
@@ -39,7 +39,7 @@
               : {};
   const Konva$2 = {
       _global: glob,
-      version: '8.3.15-beta.0',
+      version: '8.3.15-beta.1',
       isBrowser: detectBrowser(),
       isUnminified: /param/.test(function (param) { }.toString()),
       dblClickWindow: 400,
@@ -2448,7 +2448,7 @@
       window.addEventListener('touchend', DD._endDragAfter, false);
   }
 
-  class KonvaRbush {
+  class RBushPool {
       constructor() {
           this.rNodes = new Map();
           this.rbush = new RBush__default["default"]();
@@ -2470,7 +2470,7 @@
           return this.rbush.search(rect);
       }
   }
-  var rbush = new KonvaRbush();
+  var rbush = new RBushPool();
 
   // CONSTANTS
   var ABSOLUTE_OPACITY = 'absoluteOpacity', ALL_LISTENERS = 'allEventListeners', ABSOLUTE_TRANSFORM = 'absoluteTransform', ABSOLUTE_SCALE = 'absoluteScale', CANVAS = 'canvas', CHANGE = 'Change', CHILDREN = 'children', KONVA = 'konva', LISTENING = 'listening', MOUSEENTER$1 = 'mouseenter', MOUSELEAVE$1 = 'mouseleave', SET = 'set', SHAPE = 'Shape', SPACE$1 = ' ', STAGE$1 = 'stage', TRANSFORM = 'transform', UPPER_STAGE = 'Stage', VISIBLE = 'visible', TRANSFORM_CHANGE_STR$1 = [

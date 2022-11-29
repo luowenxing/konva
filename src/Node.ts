@@ -14,7 +14,7 @@ import { Stage } from './Stage';
 import { Context } from './Context';
 import { Shape } from './Shape';
 import { Layer } from './Layer';
-import rbush from './rbush';
+import rbush from './rbush-pool';
 
 export type Filter = (this: Node, imageData: ImageData) => void;
 

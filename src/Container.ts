@@ -6,7 +6,7 @@ import { GetSet, IRect } from './types';
 import { Shape } from './Shape';
 import { HitCanvas, SceneCanvas } from './Canvas';
 import { SceneContext } from './Context';
-import rbush from './rbush';
+import rbush from './rbush-pool';
 
 export interface ContainerConfig extends NodeConfig {
   clearBeforeDraw?: boolean;

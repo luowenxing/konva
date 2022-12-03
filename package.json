@@ -43,7 +43,7 @@
   },
   "scripts": {
     "start": "npm run test:watch",
-    "compile": "npm run clean && npm run tsc && cp ./src/index-types.d.ts ./lib/index-types.d.ts && cp ./src/index-types.d.ts ./cmj/index-types.d.ts",
+    "compile": "npm run clean && npm run tsc && cp ./src/index-types.d.ts ./lib/index-types.d.ts",
     "build": "npm run compile && cp ./src/index-types.d.ts ./lib && gulp build && node ./rename-imports.mjs",
     "test:import": "npm run build  && node ./test/import-test.cjs &&node ./test/import-test.mjs",
     "test": "npm run test:browser && npm run test:node",

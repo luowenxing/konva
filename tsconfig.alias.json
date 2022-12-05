@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "tsc-alias": {
+    "verbose": false,
+    "resolveFullPaths": true,
+  }
+}

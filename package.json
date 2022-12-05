@@ -9,10 +9,9 @@
     "lib",
     "cmj"
   ],
-  "main": "./cmj/index-node.js",
+  "main": "./lib/index.js",
   "browser": "./lib/index.js",
   "typings": "./lib/index-types.d.ts",
-  "type": "module",
   "__ignore_exports": {
     ".": {
       "node": {
@@ -51,7 +50,8 @@
     "test:browser": "npm run test:build && mocha-headless-chrome -f ./test-build/unit-tests.html -a disable-web-security",
     "test:node": "ts-mocha -p ./test/tsconfig.json test/unit/**/*.ts --exit && npm run test:import",
     "test:watch": "rm -rf ./parcel-cache && parcel serve ./test/unit-tests.html ./test/manual-tests.html ./test/sandbox.html",
-    "tsc": "tsc --removeComments",
+    "tsc": "tsc --removeComments && npm run tsc:callback",
+    "tsc:callback": "tsc-alias -p ./tsconfig.alias.json",
     "rollup": "rollup -c",
     "clean": "rm -rf ./lib && rm -rf ./types && rm -rf ./test-build",
     "watch": "rollup -c -w",
@@ -120,6 +120,7 @@
     "size-limit": "^8.0.0",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
+    "tsc-alias": "^1.8.1",
     "typescript": "^4.7.4"
   },
   "keywords": [

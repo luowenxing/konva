@@ -1,20 +1,26 @@
 {
   "compilerOptions": {
-    "outDir": "lib",
-    "module": "ES2015",
-    "target": "ES2015",
-    // "sourceMap": true,
-    "noEmitOnError": true,
-    "lib": ["ES2015", "dom"],
-    "moduleResolution": "node",
-    "declaration": true,
-    "removeComments": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "jsx": "preserve",
+    "target": "es6",
+    "module": "ESNext",
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "esModuleInterop": true,
     "allowJs": true,
+    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "outDir": "lib",
     "sourceMap": true,
-    "skipLibCheck": true
-    // "noImplicitAny": true,
-    // "strict": true
+    "removeComments": false,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "baseUrl": "./",
   },
   "include": ["./src/**/*.ts"]
 }

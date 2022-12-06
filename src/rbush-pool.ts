@@ -9,6 +9,7 @@ type BoundaryRect = {
 
 interface RNode extends BoundaryRect {
   id: number;
+  hasActionKey: boolean;
 }
 
 class RBushPool {

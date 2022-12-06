@@ -138,6 +138,7 @@ export abstract class Container<
     this._fire('add', {
       child: child,
     });
+    this.addToRBush(child);
     this._requestDraw();
     // chainable
     return this;
@@ -145,7 +146,7 @@ export abstract class Container<
   // 添加到 r-tree
   addToRBush(child: Node<NodeConfig>) {
     const clientRect = child.getClientRect();
-    if (!clientRect) {
+    if (!clientRect || child instanceof Container) {
       return;
     }
     const matrix = child.getAbsoluteTransform().getMatrix();
@@ -158,6 +159,7 @@ export abstract class Container<
       maxX: x + clientRect.width,
       maxY: y + clientRect.height,
       id: child._id,
+      hasActionKey: child.attrs.SmartSheetCanvasActionKey,
     });
   }
 

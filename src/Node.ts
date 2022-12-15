@@ -161,6 +161,8 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   _dragEventId: number | null = null;
   _shouldFireChangeEvents = false;
 
+  _waitingForUpdateRBush = false;
+
   constructor(config?: Config) {
     // on initial set attrs wi don't need to fire change events
     // because nobody is listening to them yet
@@ -856,26 +858,32 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   }
 
   /**
-   * 更新 r-tree
+   * 批量更新 r-tree
    * @returns 
    */
   updateRBush() {
-    const clientRect = this.getClientRect();
-    if (!clientRect || this instanceof Container) {
-      return;
+    if (!this._waitingForUpdateRBush) {
+      this._waitingForUpdateRBush = true;
+      Util.requestAnimFrame(() => {
+        const clientRect = this.getClientRect();
+        if (!clientRect || this instanceof Container) {
+          return;
+        }
+        const matrix = this.getAbsoluteTransform().getMatrix();
+        const x = matrix[4];
+        const y = matrix[5];
+        
+        rbush.add({
+          minX: x,
+          minY: y,
+          maxX: x + clientRect.width,
+          maxY: y + clientRect.height,
+          id: this._id,
+          hasActionKey: this.attrs.SmartSheetCanvasActionKey,
+        });
+        this._waitingForUpdateRBush = false;
+      });
     }
-    const matrix = this.getAbsoluteTransform().getMatrix();
-    const x = matrix[4];
-    const y = matrix[5];
-    
-    rbush.add({
-      minX: x,
-      minY: y,
-      maxX: x + clientRect.width,
-      maxY: y + clientRect.height,
-      id: this._id,
-      hasActionKey: this.attrs.SmartSheetCanvasActionKey,
-    });
   }
 
   /**

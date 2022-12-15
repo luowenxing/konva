@@ -30,6 +30,7 @@ class RBushPool {
     if (node) {
       this.rbush.remove(node);
     }
+    this.rNodes.delete(id);
   }
 
   public clear() {
@@ -38,6 +39,11 @@ class RBushPool {
 
   public search(rect: BoundaryRect): RNode[] {
     return this.rbush.search(rect);
+  }
+
+  public update(item: RNode) {
+    this.delete(item.id);
+    this.add(item);
   }
 }
 

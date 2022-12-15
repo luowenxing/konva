@@ -854,6 +854,30 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   removeFromRBush() {
     rbush.delete(this._id);
   }
+
+  /**
+   * 更新 r-tree
+   * @returns 
+   */
+  updateRBush() {
+    const clientRect = this.getClientRect();
+    if (!clientRect || this instanceof Container) {
+      return;
+    }
+    const matrix = this.getAbsoluteTransform().getMatrix();
+    const x = matrix[4];
+    const y = matrix[5];
+    
+    rbush.add({
+      minX: x,
+      minY: y,
+      maxX: x + clientRect.width,
+      maxY: y + clientRect.height,
+      id: this._id,
+      hasActionKey: this.attrs.SmartSheetCanvasActionKey,
+    });
+  }
+
   /**
    * remove and destroy a node. Kill it and delete forever! You should not reuse node after destroy().
    * If the node is a container (Group, Stage or Layer) it will destroy all children too.

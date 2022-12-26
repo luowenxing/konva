@@ -1,6 +1,6 @@
 {
   "name": "@tencent/docs-konva",
-  "version": "8.3.15-beta.2",
+  "version": "8.3.15-beta.16",
   "author": "Glory Yin",
   "files": [
     "README.md",
@@ -9,10 +9,9 @@
     "lib",
     "cmj"
   ],
-  "main": "./cmj/index-node.js",
+  "main": "./lib/index.js",
   "browser": "./lib/index.js",
   "typings": "./lib/index-types.d.ts",
-  "type": "module",
   "__ignore_exports": {
     ".": {
       "node": {
@@ -43,17 +42,18 @@
   },
   "scripts": {
     "start": "npm run test:watch",
-    "compile": "npm run clean && npm run tsc && cp ./src/index-types.d.ts ./lib/index-types.d.ts && cp ./package-cmj.json ./cmj/package.json && cp ./src/index-types.d.ts ./cmj/index-types.d.ts",
-    "build": "npm run compile && cp ./src/index-types.d.ts ./lib && gulp build && node ./rename-imports.mjs",
+    "compile": "npm run clean && npm run tsc && cp ./src/index-types.d.ts ./lib/index-types.d.ts",
+    "build": "npm run compile && cp ./src/index-types.d.ts ./lib && gulp build",
     "test:import": "npm run build  && node ./test/import-test.cjs &&node ./test/import-test.mjs",
     "test": "npm run test:browser && npm run test:node",
     "test:build": "parcel build ./test/unit-tests.html --dist-dir ./test-build --target none --public-url ./ --no-source-maps",
     "test:browser": "npm run test:build && mocha-headless-chrome -f ./test-build/unit-tests.html -a disable-web-security",
     "test:node": "ts-mocha -p ./test/tsconfig.json test/unit/**/*.ts --exit && npm run test:import",
     "test:watch": "rm -rf ./parcel-cache && parcel serve ./test/unit-tests.html ./test/manual-tests.html ./test/sandbox.html",
-    "tsc": "tsc --removeComments && tsc --build ./tsconfig-cmj.json",
+    "tsc": "tsc --removeComments && npm run tsc:callback",
+    "tsc:callback": "tsc-alias -p ./tsconfig.alias.json",
     "rollup": "rollup -c",
-    "clean": "rm -rf ./lib && rm -rf ./types && rm -rf ./cmj && rm -rf ./test-build",
+    "clean": "rm -rf ./lib && rm -rf ./types && rm -rf ./test-build",
     "watch": "rollup -c -w",
     "size": "size-limit",
     "publish:patch": "npm version patch && npm run build && npm publish && git push --follow-tags",
@@ -120,6 +120,7 @@
     "size-limit": "^8.0.0",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
+    "tsc-alias": "^1.8.1",
     "typescript": "^4.7.4"
   },
   "keywords": [

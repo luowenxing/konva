@@ -1,8 +1,20 @@
 import { Util } from './Util';
 import { getComponentValidator } from './Validators';
+import rbush from './rbush-pool';
 
 var GET = 'get',
   SET = 'set';
+
+const DirtyAttrs = [
+  'x',
+  'y',
+  'width',
+  'height',
+  'size',
+  'position',
+  'absolutePosition',
+  'visible',
+];
 
 export const Factory = {
   addGetterSetter(constructor, attr, def?, validator?, after?) {
@@ -36,6 +48,11 @@ export const Factory = {
       }
 
       this._setAttr(attr, val);
+
+      // 如果修改了布局相关的属性
+      if (DirtyAttrs.includes(attr)) {
+        this.updateRBush();
+      }
 
       if (after) {
         after.call(this);

@@ -1,5 +1,3 @@
-import RBush from 'rbush';
-
 type BoundaryRect = {
   minX: number;
   minY: number;
@@ -9,34 +7,37 @@ type BoundaryRect = {
 
 interface RNode extends BoundaryRect {
   id: number;
+  hasActionKey: boolean;
 }
 
 class RBushPool {
-  private rbush: RBush<RNode>;
-  private rNodes = new Map<number, RNode>();
+  private rNodes: RNode[] = [];
 
-  public constructor() {
-    this.rbush = new RBush();
-  }
+  public constructor() {}
 
   public add(item: RNode) {
-    this.rbush.insert(item);
-    this.rNodes.set(item.id, item);
+    this.rNodes.push(item);
   }
 
   public delete(id: number) {
-    const node = this.rNodes.get(id);
-    if (node) {
-      this.rbush.remove(node);
-    }
+    const index = this.rNodes.findIndex(rNode => rNode.id === id);
+    this.rNodes.splice(index, 1);
   }
 
   public clear() {
-    this.rbush.clear();
+    this.rNodes = [];
   }
 
   public search(rect: BoundaryRect): RNode[] {
-    return this.rbush.search(rect);
+    const { minX, maxX, minY, maxY } = rect;
+    return this.rNodes.filter(rNode => minX >= rNode.minX && maxX <= rNode.maxX && minY >= rNode.minY && maxY <= rNode.maxY);
+  }
+
+  public update(item: RNode) {
+    const index = this.rNodes.findIndex(rNode => rNode.id === item.id);
+    if (index > -1) {
+      this.rNodes[index] = item;
+    }
   }
 }
 

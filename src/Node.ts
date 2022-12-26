@@ -161,6 +161,8 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   _dragEventId: number | null = null;
   _shouldFireChangeEvents = false;
 
+  _waitingForUpdateRBush = false;
+
   constructor(config?: Config) {
     // on initial set attrs wi don't need to fire change events
     // because nobody is listening to them yet
@@ -847,13 +849,43 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
       parent.children.splice(this.index, 1);
       parent._setChildrenIndices();
       this.parent = null;
-      this.removeFromRBush();
     }
+    this.removeFromRBush();
   }
   // 从 r-tree 移除
   removeFromRBush() {
     rbush.delete(this._id);
   }
+
+  /**
+   * 批量更新 r-tree
+   * @returns 
+   */
+  updateRBush() {
+    if (!this._waitingForUpdateRBush) {
+      this._waitingForUpdateRBush = true;
+      Util.requestAnimFrame(() => {
+        const clientRect = this.getClientRect();
+        if (!clientRect || this instanceof Container) {
+          return;
+        }
+        const matrix = this.getAbsoluteTransform().getMatrix();
+        const x = matrix[4];
+        const y = matrix[5];
+        
+        rbush.add({
+          minX: x,
+          minY: y,
+          maxX: x + clientRect.width,
+          maxY: y + clientRect.height,
+          id: this._id,
+          hasActionKey: this.attrs.SmartSheetCanvasActionKey,
+        });
+        this._waitingForUpdateRBush = false;
+      });
+    }
+  }
+
   /**
    * remove and destroy a node. Kill it and delete forever! You should not reuse node after destroy().
    * If the node is a container (Group, Stage or Layer) it will destroy all children too.

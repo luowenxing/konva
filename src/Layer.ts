@@ -359,12 +359,21 @@ export class Layer extends Container<Group | Shape> {
     const x = Math.round(pos.x * pixelRatio);
     const y = Math.round(pos.y * pixelRatio)
     
-    const results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
-
+    let results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
     if (!results) {
       return {};
     }
-    const rNode = results[results.length - 1];
+
+    results = results.filter(result => result.hasActionKey);
+    let rNode = results[0];
+    results.forEach(result => {
+        if (result.maxY - result.minY + result.maxX - result.minX <= rNode.maxX - rNode.minX + rNode.maxY - rNode.minY) {
+            rNode = result;
+        }
+    });
+    if (!rNode) {
+        return {};
+    }
     const shape = shapes[rNode.id];
     if (shape) {
       return {

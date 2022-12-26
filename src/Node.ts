@@ -849,8 +849,8 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
       parent.children.splice(this.index, 1);
       parent._setChildrenIndices();
       this.parent = null;
-      this.removeFromRBush();
     }
+    this.removeFromRBush();
   }
   // 从 r-tree 移除
   removeFromRBush() {

@@ -145,8 +145,12 @@ export abstract class Container<
   }
   // 添加到 r-tree
   addToRBush(child: Node<NodeConfig>) {
+    if (child instanceof Container || !child.listening()) {
+      return;
+    }
+    // getClientRect 耗时比较高，需要放到后面
     const clientRect = child.getClientRect();
-    if (!clientRect || child instanceof Container || !child.listening()) {
+    if (!clientRect) {
       return;
     }
     const matrix = child.getAbsoluteTransform().getMatrix();

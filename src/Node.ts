@@ -861,42 +861,49 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
    * 批量更新 r-tree
    * @returns 
    */
-  updateRBush() {
+  batchUpdateRBush() {
     if (!this._waitingForUpdateRBush) {
       this._waitingForUpdateRBush = true;
-      Util.requestAnimFrame(() => {
-        const clientRect = this.getClientRect();
-        if (!clientRect || this instanceof Container) {
-          return;
-        }
-        const matrix = this.getAbsoluteTransform().getMatrix();
-        const x = matrix[4];
-        const y = matrix[5];
-        
-        const rNode = rbush.get(this._id);
-        if (!rNode) {
-          rbush.add({
-            minX: x,
-            minY: y,
-            maxX: x + clientRect.width,
-            maxY: y + clientRect.height,
-            id: this._id,
-            hasActionKey: this.attrs.SmartSheetCanvasActionKey,
-          });
-        } else {
-          rbush.update({
-            minX: x,
-            minY: y,
-            maxX: x + clientRect.width,
-            maxY: y + clientRect.height,
-            id: this._id,
-            hasActionKey: this.attrs.SmartSheetCanvasActionKey,
-          });
-        }
-        this._waitingForUpdateRBush = false;
-      });
+      Util.requestAnimFrame(this.updateRBush);
     }
   }
+
+  updateRBush = () => {
+    const clientRect = this.getClientRect();
+    if (!clientRect) {
+      return;
+    }
+
+    if (this instanceof Container) {
+      this.getChildren().forEach(child => child.updateRBush());
+      return;
+    }
+    const matrix = this.getAbsoluteTransform().getMatrix();
+    const x = matrix[4];
+    const y = matrix[5];
+    
+    const rNode = rbush.get(this._id);
+    if (!rNode) {
+      rbush.add({
+        minX: x,
+        minY: y,
+        maxX: x + clientRect.width,
+        maxY: y + clientRect.height,
+        id: this._id,
+        hasActionKey: this.attrs.SmartSheetCanvasActionKey,
+      });
+    } else {
+      rbush.update({
+        minX: x,
+        minY: y,
+        maxX: x + clientRect.width,
+        maxY: y + clientRect.height,
+        id: this._id,
+        hasActionKey: this.attrs.SmartSheetCanvasActionKey,
+      });
+    }
+    this._waitingForUpdateRBush = false;
+  };
 
   /**
    * remove and destroy a node. Kill it and delete forever! You should not reuse node after destroy().

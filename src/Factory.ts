@@ -51,7 +51,7 @@ export const Factory = {
 
       // 如果修改了布局相关的属性
       if (DirtyAttrs.includes(attr)) {
-        this.updateRBush();
+        this.batchUpdateRBush();
       }
 
       if (after) {

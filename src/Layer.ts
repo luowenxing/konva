@@ -355,9 +355,8 @@ export class Layer extends Container<Group | Shape> {
     }
   }
   _getIntersection(pos: Vector2d): { shape?: Shape; antialiased?: boolean } {
-    const pixelRatio = this.canvas.getPixelRatio();
-    const x = Math.round(pos.x * pixelRatio);
-    const y = Math.round(pos.y * pixelRatio)
+    const x = Math.round(pos.x);
+    const y = Math.round(pos.y)
     
     let results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
     if (!results) {
@@ -367,7 +366,7 @@ export class Layer extends Container<Group | Shape> {
     results = results.filter(result => result.hasActionKey);
     let rNode = results[0];
     results.forEach(result => {
-        if (result.maxY - result.minY + result.maxX - result.minX <= rNode.maxX - rNode.minX + rNode.maxY - rNode.minY) {
+        if (rNode.id <= result.id) {
             rNode = result;
         }
     });

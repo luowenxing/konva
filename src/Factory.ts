@@ -1,6 +1,5 @@
 import { Util } from './Util';
 import { getComponentValidator } from './Validators';
-import rbush from './rbush-pool';
 
 var GET = 'get',
   SET = 'set';

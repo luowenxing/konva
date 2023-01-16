@@ -359,7 +359,7 @@ export class Layer extends Container<Group | Shape> {
     const y = Math.round(pos.y)
     
     let results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
-    if (!results) {
+    if (!results || results.length === 0) {
       return {};
     }
 

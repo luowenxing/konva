@@ -870,7 +870,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
 
   updateRBush = () => {
     const clientRect = this.getClientRect();
-    if (!clientRect) {
+    if (!clientRect || !this.listening()) {
       this._waitingForUpdateRBush = false;
       return;
     }

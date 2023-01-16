@@ -1,3 +1,5 @@
+import RBush from 'rbush';
+
 type BoundaryRect = {
   minX: number;
   minY: number;
@@ -11,44 +13,41 @@ interface RNode extends BoundaryRect {
 }
 
 class RBushPool {
-  private rNodes: Map<number, RNode> = new Map();
+  private rbush: RBush<RNode>;
+  private rNodes = new Map<number, RNode>();
 
-  public constructor() {}
+  public constructor() {
+    this.rbush = new RBush();
+  }
 
   public add(item: RNode) {
+    this.rbush.insert(item);
     this.rNodes.set(item.id, item);
   }
 
   public delete(id: number) {
+    const node = this.rNodes.get(id);
+    if (node) {
+      this.rbush.remove(node);
+    }
     this.rNodes.delete(id);
   }
 
   public clear() {
-    this.rNodes.clear();
+    this.rbush.clear();
+  }
+
+  public search(rect: BoundaryRect): RNode[] {
+    return this.rbush.search(rect);
+  }
+
+  public update(item: RNode) {
+    this.delete(item.id);
+    this.add(item);
   }
 
   public get(id: number) {
     return this.rNodes.get(id);
-  }
-
-  public search(rect: BoundaryRect): RNode[] {
-    const { minX, maxX, minY, maxY } = rect;
-    const results: RNode[] = [];
-
-    for (const rNode of this.rNodes.values()) {
-      if (minX >= rNode.minX && maxX <= rNode.maxX && minY >= rNode.minY && maxY <= rNode.maxY) {
-        results.push(rNode);
-      }
-    }
-
-    return results;
-  }
-
-  public update(item: RNode) {
-    const rNode = this.rNodes.get(item.id);
-    if (rNode) {
-      this.rNodes.set(item.id, item);
-    }
   }
 }
 

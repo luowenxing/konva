@@ -1,6 +1,7 @@
 import { Factory } from './Factory';
 import { Node, NodeConfig } from './Node';
 import { getNumberValidator } from './Validators';
+import { Util } from './Util';
 
 import { GetSet, IRect } from './types';
 import { Shape } from './Shape';
@@ -157,11 +158,16 @@ export abstract class Container<
     const x = matrix[4];
     const y = matrix[5];
     
+    const { width = 0, height = 0 } = clientRect;
+    if ([x, y, width, height].some(num => Util.isNaN(num))) {
+      return;
+    }
+
     rbush.add({
       minX: x,
       minY: y,
-      maxX: x + clientRect.width,
-      maxY: y + clientRect.height,
+      maxX: x + width,
+      maxY: y + height,
       id: child._id,
       hasActionKey: child.attrs.SmartSheetCanvasActionKey,
     });

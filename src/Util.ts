@@ -964,5 +964,8 @@ export const Util = {
       c.width = 0;
       c.height = 0;
     })
+  },
+  isNaN(num: unknown) {
+    return num !== num;
   }
 };

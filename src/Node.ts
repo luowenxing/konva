@@ -885,12 +885,17 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     const y = matrix[5];
     
     const rNode = rbush.get(this._id);
+    const { width, height } = clientRect;
+
+    if ([x, y, width, height].some(num => Util.isNaN(num))) {
+      return;
+    }
     if (!rNode) {
       rbush.add({
         minX: x,
         minY: y,
-        maxX: x + clientRect.width,
-        maxY: y + clientRect.height,
+        maxX: x + width,
+        maxY: y + height,
         id: this._id,
         hasActionKey: this.attrs.SmartSheetCanvasActionKey,
       });
@@ -898,8 +903,8 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
       rbush.update({
         minX: x,
         minY: y,
-        maxX: x + clientRect.width,
-        maxY: y + clientRect.height,
+        maxX: x + width,
+        maxY: y + height,
         id: this._id,
         hasActionKey: this.attrs.SmartSheetCanvasActionKey,
       });

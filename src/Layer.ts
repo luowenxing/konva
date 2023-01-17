@@ -363,7 +363,11 @@ export class Layer extends Container<Group | Shape> {
       return {};
     }
 
-    results = results.filter(result => result.hasActionKey);
+    const actionKeyResults = results.filter(result => result.hasActionKey);
+    if (actionKeyResults.length > 0) {
+      results = actionKeyResults;
+    }
+
     let rNode = results[0];
     results.forEach(result => {
         if (rNode.id <= result.id) {

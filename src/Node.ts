@@ -871,11 +871,13 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   updateRBush = () => {
     const clientRect = this.getClientRect();
     if (!clientRect) {
+      this._waitingForUpdateRBush = false;
       return;
     }
 
     if (this instanceof Container) {
       this.getChildren().forEach(child => child.updateRBush());
+      this._waitingForUpdateRBush = false;
       return;
     }
     const matrix = this.getAbsoluteTransform().getMatrix();

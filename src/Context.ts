@@ -89,6 +89,14 @@ var CONTEXT_PROPERTIES = [
 ] as const;
 
 const traceArrMax = 100;
+
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 /**
  * Konva wrapper around native 2d canvas context. It has almost the same API of 2d context with some additional functions.
  * With core Konva shapes you don't need to use this object. But you will use it if you want to create

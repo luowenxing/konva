@@ -7,7 +7,9 @@ import { GetSet, IRect } from './types';
 import { Shape } from './Shape';
 import { HitCanvas, SceneCanvas } from './Canvas';
 import { SceneContext } from './Context';
-import rbush from './rbush-pool';
+import rbushPool from './rbush-pool';
+
+let rbushNodes = [];
 
 export interface ContainerConfig extends NodeConfig {
   clearBeforeDraw?: boolean;
@@ -32,6 +34,8 @@ export abstract class Container<
   ChildType extends Node = Node
 > extends Node<ContainerConfig> {
   children: Array<ChildType> | undefined = [];
+  _waitingForBatchAddRBush = true;
+  clipRect: IRect;
 
   /**
    * returns an array of direct descendant nodes
@@ -163,7 +167,7 @@ export abstract class Container<
       return;
     }
 
-    rbush.add({
+    rbushNodes.push({
       minX: x,
       minY: y,
       maxX: x + width,
@@ -171,6 +175,39 @@ export abstract class Container<
       id: child._id,
       hasActionKey: child.attrs.SmartSheetCanvasActionKey,
     });
+
+    if (!this._waitingForBatchAddRBush) {
+      this._waitingForBatchAddRBush = true;
+      Util.requestAnimFrame(this.batchAddRBush);
+    }
+  }
+
+  /**
+   * 批量插入 r-tree
+   */
+  batchAddRBush() {
+
+    rbushPool.load(rbushNodes.map(rbushNode => {
+      if (!this.clipRect) {
+        return rbushNode;
+      }
+      // 处理 clip 情况下的最大最小坐标
+      if (this.clipRect.x > 0) {
+        rbushNode.minX = Math.max(this.clipRect.x, rbushNode.minX);
+      }
+      if (this.clipRect.y > 0) {
+        rbushNode.minY = Math.max(this.clipRect.y, rbushNode.minY);
+      }
+      if (this.clipRect.width > 0) {
+        rbushNode.maxX = Math.min(rbushNode.maxX, rbushNode.minX + this.clipRect.width);
+      }
+      if (this.clipRect.height > 0) {
+        rbushNode.maxY = Math.min(rbushNode.maxY, rbushNode.minY + this.clipRect.height);
+      }
+      return rbushNode;
+    }));
+    rbushNodes = [];
+    this._waitingForBatchAddRBush = false;
   }
 
   remove() {
@@ -462,6 +499,24 @@ export abstract class Container<
     if (hasClip) {
       context.restore();
     }
+  }
+
+  collectClip(clipFunc: (ctx) => void | null) {
+    if (clipFunc === null) {
+      this.clipRect = null;
+      return;
+    }
+    const ctx = {
+      rect(x, y, width, height) {
+        this.clipRect = {
+          x,
+          y,
+          width,
+          height
+        };
+      }
+    };
+    clipFunc(ctx);
   }
 
   getClientRect(config?: {

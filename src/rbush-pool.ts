@@ -35,6 +35,7 @@ class RBushPool {
 
   public clear() {
     this.rbush.clear();
+    this.rNodes.clear();
   }
 
   public search(rect: BoundaryRect): RNode[] {
@@ -48,6 +49,11 @@ class RBushPool {
 
   public get(id: number) {
     return this.rNodes.get(id);
+  }
+
+  public load(items: RNode[]) {
+    items.forEach(item => this.rNodes.set(item.id, item));
+    this.rbush.load(items);
   }
 }
 

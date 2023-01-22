@@ -9,6 +9,7 @@ import { Layer } from './Layer';
 import { DD } from './DragAndDrop';
 import { _registerNode } from './Global';
 import * as PointerEvents from './PointerEvents';
+import rbush from './rbush-pool';
 
 export interface StageConfig extends ContainerConfig {
   container: HTMLDivElement | string;
@@ -280,7 +281,7 @@ export class Stage extends Container<Layer> {
     }
 
     Util.releaseCanvas(this.bufferCanvas._canvas, this.bufferHitCanvas._canvas)
-
+    rbush.clear();
     return this;
   }
   /**

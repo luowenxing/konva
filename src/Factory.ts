@@ -15,6 +15,8 @@ const DirtyAttrs = [
   'visible',
 ];
 
+const clipFunc = 'clipFunc';
+
 export const Factory = {
   addGetterSetter(constructor, attr, def?, validator?, after?) {
     Factory.addGetter(constructor, attr, def);
@@ -51,6 +53,10 @@ export const Factory = {
       // 如果修改了布局相关的属性
       if (DirtyAttrs.includes(attr)) {
         this.batchUpdateRBush();
+      }
+      // 如果是 clipFunc
+      if (clipFunc === attr) {
+        this.collectClip?.(val);
       }
 
       if (after) {

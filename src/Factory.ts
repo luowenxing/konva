@@ -43,7 +43,7 @@ export const Factory = {
   },
   overWriteSetter(constructor, attr, validator?, after?) {
     var method = SET + Util._capitalize(attr);
-    constructor.prototype[method] = function (val) {
+    constructor.prototype[method] = function (val, update = true) {
       if (validator && val !== undefined && val !== null) {
         val = validator.call(this, val, attr);
       }

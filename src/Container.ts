@@ -34,7 +34,7 @@ export abstract class Container<
   ChildType extends Node = Node
 > extends Node<ContainerConfig> {
   children: Array<ChildType> | undefined = [];
-  _waitingForBatchAddRBush = true;
+  _waitingForBatchAddRBush = false;
   clipRect: IRect;
 
   /**

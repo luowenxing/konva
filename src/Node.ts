@@ -166,7 +166,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   constructor(config?: Config) {
     // on initial set attrs wi don't need to fire change events
     // because nobody is listening to them yet
-    this.setAttrs(config);
+    this.setAttrs(config, false);
     this._shouldFireChangeEvents = true;
 
     // all change event listeners are attached to the prototype
@@ -977,6 +977,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
    * @method
    * @name Konva.Node#setAttrs
    * @param {Object} config object containing key value pairs
+   * @param {Boolean} update 控制是否触发更新
    * @returns {Konva.Node}
    * @example
    * node.setAttrs({
@@ -984,7 +985,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
    *   fill: 'red'
    * });
    */
-  setAttrs(config: any) {
+  setAttrs(config: any, update = true) {
     this._batchTransformChanges(() => {
       var key, method;
       if (!config) {
@@ -996,7 +997,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
         }
         method = SET + Util._capitalize(key);
         // use setter if available
-        if (Util._isFunction(this[method])) {
+        if (Util._isFunction(this[method]) || !update) {
           this[method](config[key]);
         } else {
           // otherwise set directly

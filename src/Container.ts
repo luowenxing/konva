@@ -182,30 +182,50 @@ export abstract class Container<
     }
   }
 
+  getMinClipRect() {    
+    let container: Container = this;
+    let minRect = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    };
+
+    while(container) {
+      const matrix = container.getAbsoluteTransform().getMatrix();
+      const x = matrix[4];
+      const y = matrix[5];
+      const { clipRect } = container;
+      minRect.x = Math.max(minRect.x, x + clipRect.x);
+      minRect.y = Math.max(minRect.y, y + clipRect.y);
+      minRect.width = Math.min(minRect.width, clipRect.width);
+      minRect.height = Math.min(minRect.height, clipRect.height);
+
+      container = this.parent;
+    }
+
+    return minRect;
+
+  }
   /**
    * 批量插入 r-tree
    */
-  batchAddRBush() {
+  batchAddRBush = () => {
 
     rbushPool.load(rbushNodes.map(rbushNode => {
-      if (!this.clipRect) {
-        return rbushNode;
-      }
-      const matrix = this.getAbsoluteTransform().getMatrix();
-      const x = matrix[4];
-      const y = matrix[5];
+      const minClipRect = this.getMinClipRect();
       // 处理 clip 情况下的最大最小坐标
-      if (this.clipRect.x > 0) {
-        rbushNode.minX = Math.max(this.clipRect.x + x, rbushNode.minX);
+      if (minClipRect.x > 0) {
+        rbushNode.minX = Math.max(minClipRect.x, rbushNode.minX);
       }
-      if (this.clipRect.y > 0) {
-        rbushNode.minY = Math.max(this.clipRect.y + y, rbushNode.minY);
+      if (minClipRect.y > 0) {
+        rbushNode.minY = Math.max(minClipRect.y, rbushNode.minY);
       }
-      if (this.clipRect.width > 0) {
-        rbushNode.maxX = Math.min(rbushNode.maxX, rbushNode.minX + this.clipRect.width);
+      if (minClipRect.width > 0) {
+        rbushNode.maxX = Math.min(rbushNode.maxX, rbushNode.minX + minClipRect.width);
       }
-      if (this.clipRect.height > 0) {
-        rbushNode.maxY = Math.min(rbushNode.maxY, rbushNode.minY + this.clipRect.height);
+      if (minClipRect.height > 0) {
+        rbushNode.maxY = Math.min(rbushNode.maxY, rbushNode.minY + minClipRect.height);
       }
       return rbushNode;
     }));
@@ -510,7 +530,7 @@ export abstract class Container<
       return;
     }
     const ctx = {
-      rect(x, y, width, height) {
+      rect: (x, y, width, height) => {
         this.clipRect = {
           x,
           y,

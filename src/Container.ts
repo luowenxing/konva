@@ -191,12 +191,15 @@ export abstract class Container<
       if (!this.clipRect) {
         return rbushNode;
       }
+      const matrix = this.getAbsoluteTransform().getMatrix();
+      const x = matrix[4];
+      const y = matrix[5];
       // 处理 clip 情况下的最大最小坐标
       if (this.clipRect.x > 0) {
-        rbushNode.minX = Math.max(this.clipRect.x, rbushNode.minX);
+        rbushNode.minX = Math.max(this.clipRect.x + x, rbushNode.minX);
       }
       if (this.clipRect.y > 0) {
-        rbushNode.minY = Math.max(this.clipRect.y, rbushNode.minY);
+        rbushNode.minY = Math.max(this.clipRect.y + y, rbushNode.minY);
       }
       if (this.clipRect.width > 0) {
         rbushNode.maxX = Math.min(rbushNode.maxX, rbushNode.minX + this.clipRect.width);

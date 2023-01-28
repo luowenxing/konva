@@ -997,8 +997,8 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
         }
         method = SET + Util._capitalize(key);
         // use setter if available
-        if (Util._isFunction(this[method]) || !update) {
-          this[method](config[key]);
+        if (Util._isFunction(this[method])) {
+          this[method](config[key], update);
         } else {
           // otherwise set directly
           this._setAttr(key, config[key]);

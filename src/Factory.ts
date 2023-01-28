@@ -51,7 +51,7 @@ export const Factory = {
       this._setAttr(attr, val);
 
       // 如果修改了布局相关的属性
-      if (DirtyAttrs.includes(attr)) {
+      if (DirtyAttrs.includes(attr) && update) {
         this.batchUpdateRBush();
       }
       // 如果是 clipFunc

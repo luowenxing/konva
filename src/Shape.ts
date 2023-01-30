@@ -433,7 +433,7 @@ export class Shape<
 
   destroy() {
     Node.prototype.destroy.call(this);
-    delete shapes[this.colorKey];
+    delete shapes[this._id];
     delete this.colorKey;
     return this;
   }

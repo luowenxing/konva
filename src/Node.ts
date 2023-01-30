@@ -870,7 +870,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
 
   updateRBush = () => {
     const clientRect = this.getClientRect();
-    if (!clientRect || !this.listening()) {
+    if (!clientRect || !this.listening() || !this.parent) {
       this._waitingForUpdateRBush = false;
       return;
     }
@@ -890,27 +890,79 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     if ([x, y, width, height].some(num => Util.isNaN(num))) {
       return;
     }
+    const node = {
+      minX: x,
+      minY: y,
+      maxX: x + width,
+      maxY: y + height,
+      id: this._id,
+      hasActionKey: this.attrs.SmartSheetCanvasActionKey,
+    };
+
+    const minClipRect = this.getMinClipRect();
+    if (minClipRect.minX > 0) {
+      node.minX = Math.max(minClipRect.minX, node.minX);
+    }
+    if (minClipRect.minY > 0) {
+      node.minY = Math.max(minClipRect.minY, node.minY);
+    }
+    if (minClipRect.maxX > 0) {
+      node.maxX = Math.min(node.maxX, minClipRect.maxX);
+    }
+    if (minClipRect.maxY > 0) {
+      node.maxY = Math.min(node.maxY, minClipRect.maxY);
+    }
+
     if (!rNode) {
-      rbush.add({
-        minX: x,
-        minY: y,
-        maxX: x + width,
-        maxY: y + height,
-        id: this._id,
-        hasActionKey: this.attrs.SmartSheetCanvasActionKey,
-      });
-    } else {
-      rbush.update({
-        minX: x,
-        minY: y,
-        maxX: x + width,
-        maxY: y + height,
-        id: this._id,
-        hasActionKey: this.attrs.SmartSheetCanvasActionKey,
-      });
+      rbush.add(node);
+    }
+    else {
+      rbush.update(node);
     }
     this._waitingForUpdateRBush = false;
   };
+
+  getMinClipRect() {
+    let container: any = this;
+    let rect = {
+      minX: 0,
+      minY: 0,
+      maxX: 0,
+      maxY: 0,
+    };
+
+    while (container) {
+      const { clipRect } = container;
+      if (!clipRect) {
+          container = container.parent;
+          continue;
+      }
+      const matrix = container.getAbsoluteTransform().getMatrix();
+      if (!matrix) {
+          container = container.parent;
+          continue;
+      }
+      const x = matrix[4];
+      const y = matrix[5];
+      rect.minX = Math.max(rect.minX, x + clipRect.x);
+      rect.minY = Math.max(rect.minY, y + clipRect.y);
+      if (rect.maxX <= 0) {
+          rect.maxX = x + clipRect.x + clipRect.width;
+      } else {
+          rect.maxX = Math.min(rect.maxX, x + clipRect.x + clipRect.width);
+      }
+
+      if (rect.maxY <= 0) {
+          rect.maxY = y + clipRect.y + clipRect.height;
+      } else {
+          rect.maxY = Math.min(rect.maxY, y + clipRect.y + clipRect.height);
+      }
+
+      container = container.parent;
+    }
+
+    return rect;
+  }
 
   /**
    * remove and destroy a node. Kill it and delete forever! You should not reuse node after destroy().

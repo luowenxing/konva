@@ -9,8 +9,6 @@ import { HitCanvas, SceneCanvas } from './Canvas';
 import { SceneContext } from './Context';
 import rbushPool from './rbush-pool';
 
-let rbushNodes = [];
-
 export interface ContainerConfig extends NodeConfig {
   clearBeforeDraw?: boolean;
   clipFunc?: (ctx: SceneContext) => void;
@@ -34,6 +32,7 @@ export abstract class Container<
   ChildType extends Node = Node
 > extends Node<ContainerConfig> {
   children: Array<ChildType> | undefined = [];
+  rbushNodes = [];
   _waitingForBatchAddRBush = false;
   clipRect: IRect;
 
@@ -167,7 +166,7 @@ export abstract class Container<
       return;
     }
 
-    rbushNodes.push({
+    this.rbushNodes.push({
       minX: x,
       minY: y,
       maxX: x + width,
@@ -182,54 +181,75 @@ export abstract class Container<
     }
   }
 
-  getMinClipRect() {    
-    let container: Container = this;
-    let minRect = {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
+  getMinClipRect() {
+    let container: any = this;
+    let rect = {
+        minX: 0,
+        minY: 0,
+        maxX: 0,
+        maxY: 0,
     };
 
-    while(container) {
-      const matrix = container.getAbsoluteTransform().getMatrix();
-      const x = matrix[4];
-      const y = matrix[5];
-      const { clipRect } = container;
-      minRect.x = Math.max(minRect.x, x + clipRect.x);
-      minRect.y = Math.max(minRect.y, y + clipRect.y);
-      minRect.width = Math.min(minRect.width, clipRect.width);
-      minRect.height = Math.min(minRect.height, clipRect.height);
+    while (container) {
+        const { clipRect } = container;
+        if (!clipRect) {
+            container = container.parent;
+            continue;
+        }
+        const matrix = container.getAbsoluteTransform().getMatrix();
+        if (!matrix) {
+            container = container.parent;
+            continue;
+        }
+        const x = matrix[4];
+        const y = matrix[5];
+        rect.minX = Math.max(rect.minX, x + clipRect.x);
+        rect.minY = Math.max(rect.minY, y + clipRect.y);
+        if (rect.maxX <= 0) {
+            rect.maxX = x + clipRect.x + clipRect.width;
+        } else {
+            rect.maxX = Math.min(rect.maxX, x + clipRect.x + clipRect.width);
+        }
 
-      container = this.parent;
+        if (rect.maxY <= 0) {
+            rect.maxY = y + clipRect.y + clipRect.height;
+        } else {
+            rect.maxY = Math.min(rect.maxY, y + clipRect.y + clipRect.height);
+        }
+
+        container = container.parent;
     }
 
-    return minRect;
-
+    return rect;
   }
   /**
    * 批量插入 r-tree
    */
   batchAddRBush = () => {
+    if (this.rbushNodes.length === 0 || !this.parent) {
+      this._waitingForBatchAddRBush = false;
+      return;
+    }
 
-    rbushPool.load(rbushNodes.map(rbushNode => {
+    this.rbushNodes.forEach(rbushNode => {
       const minClipRect = this.getMinClipRect();
-      // 处理 clip 情况下的最大最小坐标
-      if (minClipRect.x > 0) {
-        rbushNode.minX = Math.max(minClipRect.x, rbushNode.minX);
+      if (minClipRect.minX > 0) {
+          rbushNode.minX = Math.max(minClipRect.minX, rbushNode.minX);
       }
-      if (minClipRect.y > 0) {
-        rbushNode.minY = Math.max(minClipRect.y, rbushNode.minY);
+      if (minClipRect.minY > 0) {
+          rbushNode.minY = Math.max(minClipRect.minY, rbushNode.minY);
       }
-      if (minClipRect.width > 0) {
-        rbushNode.maxX = Math.min(rbushNode.maxX, rbushNode.minX + minClipRect.width);
+      if (minClipRect.maxX > 0) {
+          rbushNode.maxX = Math.min(rbushNode.maxX, minClipRect.maxX);
       }
-      if (minClipRect.height > 0) {
-        rbushNode.maxY = Math.min(rbushNode.maxY, rbushNode.minY + minClipRect.height);
+      if (minClipRect.maxY > 0) {
+          rbushNode.maxY = Math.min(rbushNode.maxY, minClipRect.maxY);
       }
-      return rbushNode;
-    }));
-    rbushNodes = [];
+
+      rbushPool.add(rbushNode);
+    });
+    // rbushPool.load(this.rbushNodes);
+    this.rbushNodes = [];
     this._waitingForBatchAddRBush = false;
   }
 

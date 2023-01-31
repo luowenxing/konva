@@ -869,17 +869,26 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   }
 
   updateRBush = () => {
-    const clientRect = this.getClientRect();
-    if (!clientRect || !this.listening() || !this.parent) {
+    // 没有父节点，直接return
+    if (!this.parent) {
       this._waitingForUpdateRBush = false;
       return;
     }
-
     if (this instanceof Container) {
       this.getChildren().forEach(child => child.updateRBush());
       this._waitingForUpdateRBush = false;
       return;
     }
+    if (!this.listening()) {
+      this._waitingForUpdateRBush = false;
+      return;
+    }
+    const clientRect = this.size();
+    if (!clientRect) {
+      this._waitingForUpdateRBush = false;
+      return;
+    }
+
     const matrix = this.getAbsoluteTransform().getMatrix();
     const x = matrix[4];
     const y = matrix[5];

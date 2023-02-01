@@ -359,16 +359,19 @@ export class Layer extends Container<Group | Shape> {
     const y = Math.round(pos.y)
     
     let results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
+    // 兜底操作，如果当前匹配到的不在 layer 树上，就过滤掉
+    results = results.filter(result => shapes[result.id]?.getLayer()) ?? [];
     if (!results || results.length === 0) {
       return {};
     }
-
+    // 优先匹配带 actionKey 的
     const actionKeyResults = results.filter(result => result.hasActionKey);
     if (actionKeyResults.length > 0) {
       results = actionKeyResults;
     }
 
     let rNode = results[0];
+    // 根据 id 来判断匹配到哪个 shape（后续需要根据 z-index 判断）
     results.forEach(result => {
         if (rNode.id <= result.id) {
             rNode = result;

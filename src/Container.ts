@@ -32,7 +32,7 @@ export abstract class Container<
   ChildType extends Node = Node
 > extends Node<ContainerConfig> {
   children: Array<ChildType> | undefined = [];
-  rbushNodes = [];
+  rbushShapes = [];
   _waitingForBatchAddRBush = false;
   clipRect: IRect;
 
@@ -87,7 +87,11 @@ export abstract class Container<
       child.index = 0;
       child.remove();
     });
+    // removeChildren 只会移除 children，不会递归孙子节点
+    // 所以这里需要递归删除 r-tree 里面的节点
+    this.removeFromRBush();
     this.children = [];
+    this.rbushShapes = [];
     // because all children were detached from parent, request draw via container
     this._requestDraw();
     return this;
@@ -105,6 +109,7 @@ export abstract class Container<
       child.destroy();
     });
     this.children = [];
+    this.rbushShapes = [];
     // because all children were detached from parent, request draw via container
     this._requestDraw();
     return this;
@@ -149,32 +154,8 @@ export abstract class Container<
   }
   // 添加到 r-tree
   addToRBush(child: Node<NodeConfig>) {
-    if (child instanceof Container || !child.listening()) {
-      return;
-    }
-    // getClientRect 耗时比较高，需要放到后面
-    const clientRect = child.getClientRect();
-    if (!clientRect) {
-      return;
-    }
-    const matrix = child.getAbsoluteTransform().getMatrix();
-    const x = matrix[4];
-    const y = matrix[5];
-    
-    const { width = 0, height = 0 } = clientRect;
-    if ([x, y, width, height].some(num => Util.isNaN(num))) {
-      return;
-    }
-
-    this.rbushNodes.push({
-      minX: x,
-      minY: y,
-      maxX: x + width,
-      maxY: y + height,
-      id: child._id,
-      hasActionKey: child.attrs.SmartSheetCanvasActionKey,
-    });
-
+    this.rbushShapes.push(child);
+    // 异步添加性能更好，也可以避免此时还没有添加父节点
     if (!this._waitingForBatchAddRBush) {
       this._waitingForBatchAddRBush = true;
       Util.requestAnimFrame(this.batchAddRBush);
@@ -226,12 +207,41 @@ export abstract class Container<
    * 批量插入 r-tree
    */
   batchAddRBush = () => {
-    if (this.rbushNodes.length === 0 || !this.parent) {
+    if (this.rbushShapes.length === 0 || !this.parent) {
       this._waitingForBatchAddRBush = false;
       return;
     }
 
-    this.rbushNodes.forEach(rbushNode => {
+    const rbushNodes = [];
+    this.rbushShapes.forEach(shape => {
+      // 如果当前节点是 group，或者没有开启事件，或者没有 layer 节点，那么就不加入 r-tree
+      if (shape instanceof Container || !shape.listening() || !shape.getLayer()) {
+        return;
+      }
+      // 获取尺寸
+      const size = shape.size();
+      if (!size) {
+          return;
+      }
+      // 获取位置矩阵
+      const matrix = shape.getAbsoluteTransform().getMatrix();
+      const x = matrix[4];
+      const y = matrix[5];
+      const { width = 0, height = 0 } = size;
+      if ([x, y, width, height].some(num => Util.isNaN(num))) {
+          return;
+      }
+
+      // 创建 rbush 节点
+      const rbushNode = {
+        minX: x,
+        minY: y,
+        maxX: x + width,
+        maxY: y + height,
+        id: shape._id,
+        hasActionKey: shape.attrs.SmartSheetCanvasActionKey,
+      };
+      // 处理父节点有 clip 的情况，计算最小的包围盒
       const minClipRect = this.getMinClipRect();
       if (minClipRect.minX > 0) {
           rbushNode.minX = Math.max(minClipRect.minX, rbushNode.minX);
@@ -246,20 +256,21 @@ export abstract class Container<
           rbushNode.maxY = Math.min(rbushNode.maxY, minClipRect.maxY);
       }
 
-      rbushPool.add(rbushNode);
+      rbushNodes.push(rbushNode);
+
     });
-    // rbushPool.load(this.rbushNodes);
-    this.rbushNodes = [];
+    // 批量加载，性能更优
+    rbushPool.load(this.rbushShapes);
+
+    this.rbushShapes = [];
     this._waitingForBatchAddRBush = false;
   }
 
-  remove() {
-    if (this.hasChildren()) {
-      this.removeChildren();
-    }
-    super.remove();
-    return this;
+  removeFromRBush() {
+    super.removeFromRBush();
+    this.children?.forEach(child => child.removeFromRBush());
   }
+
   destroy() {
     if (this.hasChildren()) {
       this.destroyChildren();

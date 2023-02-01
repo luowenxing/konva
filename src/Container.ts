@@ -260,7 +260,7 @@ export abstract class Container<
 
     });
     // 批量加载，性能更优
-    rbushPool.load(this.rbushShapes);
+    rbushPool.load(rbushNodes);
 
     this.rbushShapes = [];
     this._waitingForBatchAddRBush = false;

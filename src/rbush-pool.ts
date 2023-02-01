@@ -51,6 +51,10 @@ class RBushPool {
     return this.rNodes.get(id);
   }
 
+  public has(id: number) {
+    return !!this.get(id);
+  }
+
   public load(items: RNode[]) {
     items.forEach(item => this.rNodes.set(item.id, item));
     this.rbush.load(items);

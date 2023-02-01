@@ -922,7 +922,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
       node.maxY = Math.min(node.maxY, minClipRect.maxY);
     }
 
-    if (!rNode) {
+    if (!rNode && !rbush.has(node.id)) {
       rbush.add(node);
     }
     else {

@@ -218,6 +218,10 @@ export abstract class Container<
       if (shape instanceof Container || !shape.listening() || !shape.getLayer()) {
         return;
       }
+      // 如果 r-tree 里面已经有当前节点，那么就退出
+      if (rbushPool.has(shape._id)) {
+        return;
+      }
       // 获取尺寸
       const size = shape.size();
       if (!size) {
@@ -257,7 +261,6 @@ export abstract class Container<
       }
 
       rbushNodes.push(rbushNode);
-
     });
     // 批量加载，性能更优
     rbushPool.load(rbushNodes);

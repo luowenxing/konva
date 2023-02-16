@@ -10,7 +10,6 @@ import { GetSet, Vector2d } from './types';
 import { Group } from './Group';
 import { Shape, shapes } from './Shape';
 import { _registerNode } from './Global';
-import rbush from './rbush-pool';
 
 export interface LayerConfig extends ContainerConfig {
   clearBeforeDraw?: boolean;
@@ -356,9 +355,10 @@ export class Layer extends Container<Group | Shape> {
   }
   _getIntersection(pos: Vector2d): { shape?: Shape; antialiased?: boolean } {
     const x = Math.round(pos.x);
-    const y = Math.round(pos.y)
+    const y = Math.round(pos.y);
     
-    let results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
+    const stage = this.getStage();
+    let results = stage?.rbushPool?.search?.({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
     // 兜底操作，如果当前匹配到的不在 layer 树上，就过滤掉
     results = results.filter(result => shapes[result.id]?.getLayer()) ?? [];
     if (!results || results.length === 0) {

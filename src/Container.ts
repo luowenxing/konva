@@ -7,7 +7,6 @@ import { GetSet, IRect } from './types';
 import { Shape } from './Shape';
 import { HitCanvas, SceneCanvas } from './Canvas';
 import { SceneContext } from './Context';
-import rbushPool from './rbush-pool';
 
 export interface ContainerConfig extends NodeConfig {
   clearBeforeDraw?: boolean;
@@ -218,8 +217,10 @@ export abstract class Container<
       if (shape instanceof Container || !shape.listening() || !shape.getLayer()) {
         return;
       }
+
+      const stage = this.getStage();
       // 如果 r-tree 里面已经有当前节点，那么就退出
-      if (rbushPool.has(shape._id)) {
+      if (stage?.rbushPool?.has?.(shape._id)) {
         return;
       }
       // 获取尺寸
@@ -262,8 +263,12 @@ export abstract class Container<
 
       rbushNodes.push(rbushNode);
     });
-    // 批量加载，性能更优
-    rbushPool.load(rbushNodes);
+
+    if (rbushNodes.length > 0) {
+      const stage = this.getStage();
+      // 批量加载，性能更优
+      stage?.rbushPool?.load?.(rbushNodes);
+    }
 
     this.rbushShapes = [];
     this._waitingForBatchAddRBush = false;

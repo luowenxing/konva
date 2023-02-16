@@ -14,7 +14,6 @@ import { Stage } from './Stage';
 import { Context } from './Context';
 import { Shape } from './Shape';
 import { Layer } from './Layer';
-import rbush from './rbush-pool';
 
 export type Filter = (this: Node, imageData: ImageData) => void;
 
@@ -854,7 +853,8 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   }
   // 从 r-tree 移除
   removeFromRBush() {
-    rbush.delete(this._id);
+    const stage = this.getStage();
+    stage?.rbushPool?.delete?.(this._id);
   }
 
   /**
@@ -893,7 +893,8 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     const x = matrix[4];
     const y = matrix[5];
     
-    const rNode = rbush.get(this._id);
+    const stage = this.getStage();
+    const rNode = stage?.rbushPool?.get?.(this._id);
     const { width, height } = clientRect;
 
     if ([x, y, width, height].some(num => Util.isNaN(num))) {
@@ -922,11 +923,11 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
       node.maxY = Math.min(node.maxY, minClipRect.maxY);
     }
 
-    if (!rNode && !rbush.has(node.id)) {
-      rbush.add(node);
+    if (!rNode && !stage?.rbushPool?.has?.(node.id)) {
+      stage?.rbushPool?.add?.(node);
     }
     else {
-      rbush.update(node);
+      stage?.rbushPool?.update?.(node);
     }
     this._waitingForUpdateRBush = false;
   };

@@ -61,4 +61,4 @@ class RBushPool {
   }
 }
 
-export default new RBushPool();
+export default RBushPool;

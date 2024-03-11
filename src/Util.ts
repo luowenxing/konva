@@ -2,6 +2,13 @@ import { Konva } from './Global';
 import { Context } from './Context';
 import { IRect, RGB, RGBA, Vector2d } from './types';
 
+export interface IViewPort {
+  viewportX: number;
+  viewportY: number;
+  viewportW: number;
+  viewportH: number;
+}
+
 /*
  * Last updated November 2011
  * By Simon Sarris
@@ -1037,5 +1044,60 @@ export const Util = {
     );
     context.lineTo(0, topLeft);
     context.arc(topLeft, topLeft, topLeft, Math.PI, (Math.PI * 3) / 2, false);
-  }
+  },
+  isValidViewport(viewport: IViewPort) {
+    return viewport.viewportX >= 0 && viewport.viewportY >= 0 && viewport.viewportW >= 0 && viewport.viewportH >= 0;
+  },
+  makeReuseViewport(viewportW: number, viewportH: number, deltaX: number, deltaY: number): {
+    src: IViewPort;
+    dst: IViewPort; 
+  } | undefined {
+    if (deltaX > 0) {
+    
+    } else if (deltaX < 0) {
+
+    }
+
+    // 处理deltaY
+    const absDeltaY = Math.abs(deltaY);
+    const vY1 = {
+      viewportX: 0,
+      viewportY: absDeltaY,
+      viewportW,
+      viewportH:  viewportH - absDeltaY,
+    };
+    const vY2 = {
+      viewportX: 0,
+      viewportY: 0,
+      viewportW,
+      viewportH:  viewportH - absDeltaY
+    }
+
+    if (deltaY > 0) {
+      return { src: vY1, dst: vY2 };
+    } else if (deltaY < 0) {
+      return { src: vY2, dst: vY1 };
+    }
+
+    // 处理deltaX
+    const absDeltaX = Math.abs(deltaX);
+    const vX1 = {
+      viewportX: 0,
+      viewportY: 0,
+      viewportW: viewportW - absDeltaX,
+      viewportH,
+    };
+    const vX2 = {
+      viewportX: absDeltaX,
+      viewportY: 0,
+      viewportW: viewportW - absDeltaX,
+      viewportH: viewportH
+    };
+
+    if (deltaX > 0) {
+      return { src: vX2, dst: vX1 };
+    } else if (deltaX < 0) {
+      return { src: vX1, dst: vX2 };
+    }
+  },
 };

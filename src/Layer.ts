@@ -393,6 +393,9 @@ export class Layer extends Container<Group | Shape> {
     });
 
     if (this.clearBeforeDraw()) {
+      const { _canvas, _cacheCanvas } = canvas;
+      const cacheContext = _cacheCanvas.getContext('2d');
+      cacheContext?.drawImage(_canvas, 0, 0, _canvas.width, _canvas.height);
       canvas.getContext().clear();
     }
 

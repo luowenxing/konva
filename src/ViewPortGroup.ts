@@ -52,7 +52,7 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
     const viewport = this.getViewport();
     this.reuseViewport = Util.calcReuseViewport(viewport, deltaX, deltaY);
 
-    console.log(`reuseViewport: ${JSON.stringify(this.reuseViewport)}`)
+    console.log(`reuse viewport: ${JSON.stringify(this.reuseViewport)}`);
 
     Konva.autoDrawEnabled = false;
     this.viewportX(viewport.viewportX + deltaX);
@@ -125,12 +125,20 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
       viewports.push(viewport);
     }
     const children: Shape[] = [];
+    const uniqueSet = new Set<Shape>();
     viewports.forEach((vp) => {
       const result = this.viewportChildren(vp);
-      children.push(...result);
+      result.forEach(child => {
+        if (!uniqueSet.has(child)) {
+          children.push(child);
+          uniqueSet.add(child);
+        }
+      })
     })
 
-    children?.forEach(function (child) {
+    console.log(`incremental draw children count: ${children.length}`);
+
+    children.forEach(function (child) {
       child[drawMethod](canvas, top, bufferCanvas);
     });
     if (hasComposition) {
@@ -143,16 +151,18 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
 
     if (this.reuseViewport) {
       const { src, dst } = this.reuseViewport;
-      const { viewportX: srcX, viewportY: srcY, viewportW: srcW, viewportH: srcH } = src;
-      const { viewportX: dstX, viewportY: dstY, viewportW: dstW, viewportH: dstH  } = dst;
-      const { _cacheCanvas, pixelRatio } = canvas;
-      context.save()
-      context.setTransform(1, 0, 0, 1, 0, 0);
-      context.drawImage(_cacheCanvas,
-        srcX * pixelRatio, srcY * pixelRatio, srcW * pixelRatio, srcH * pixelRatio,
-        dstX * pixelRatio, dstY * pixelRatio, dstW * pixelRatio, dstH * pixelRatio,
-      )
-      context.restore();
+      if (Util.isValidViewport(src) && Util.isValidViewport(dst)) {
+        const { viewportX: srcX, viewportY: srcY, viewportW: srcW, viewportH: srcH } = src;
+        const { viewportX: dstX, viewportY: dstY, viewportW: dstW, viewportH: dstH  } = dst;
+        const { _cacheCanvas, pixelRatio } = canvas;
+        context.save()
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.drawImage(_cacheCanvas,
+          srcX * pixelRatio, srcY * pixelRatio, srcW * pixelRatio, srcH * pixelRatio,
+          dstX * pixelRatio, dstY * pixelRatio, dstW * pixelRatio, dstH * pixelRatio,
+        )
+        context.restore();
+      }
       this.reuseViewport = undefined;
     }
   }

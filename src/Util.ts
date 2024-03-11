@@ -1073,15 +1073,15 @@ export const Util = {
         viewportH:  viewportH - absDeltaY
       };
       const diff = [{
-        viewportX: viewportX + viewportW,
+        viewportX: viewportX + Math.max(absDeltaX, viewportW),
         viewportY: viewportY + absDeltaY,
-        viewportW: absDeltaX,
+        viewportW: Math.min(absDeltaX, viewportW),
         viewportH: viewportH,
       }, {
         viewportX: viewportX + absDeltaX,
-        viewportY: viewportY + viewportH,
+        viewportY: viewportY + Math.max(viewportH, absDeltaY),
         viewportW: viewportW,
-        viewportH: absDeltaY,
+        viewportH: Math.min(absDeltaY, viewportH),
       }];
       return { src, dst, diff };
     } else if (deltaX > 0 && deltaY <= 0) {
@@ -1098,9 +1098,9 @@ export const Util = {
         viewportH:  viewportH - absDeltaY
       };
       const diff = [{
-        viewportX: viewportX + viewportW,
+        viewportX: viewportX + Math.max(viewportW, absDeltaX),
         viewportY: viewportY -  absDeltaY,
-        viewportW: absDeltaX,
+        viewportW: Math.min(viewportW, absDeltaX),
         viewportH: viewportH,
       }];
       if (deltaY !== 0) {
@@ -1108,7 +1108,7 @@ export const Util = {
           viewportX: viewportX + absDeltaX,
           viewportY: viewportY -  absDeltaY,
           viewportW,
-          viewportH: absDeltaY,
+          viewportH: Math.min(viewportH, absDeltaY),
         });
       }
       return { src, dst, diff };
@@ -1127,15 +1127,15 @@ export const Util = {
       };
       const diff = [{
         viewportX: viewportX - absDeltaX,
-        viewportY: viewportY + viewportH,
+        viewportY: viewportY + Math.max(absDeltaY, viewportH),
         viewportW: viewportW,
-        viewportH: absDeltaY,
+        viewportH: Math.min(absDeltaY, viewportH),
       }];
       if (deltaX !== 0) {
         diff.push({
           viewportX: viewportX - absDeltaX,
           viewportY: viewportY + absDeltaY,
-          viewportW: absDeltaX,
+          viewportW: Math.min(viewportW, absDeltaX),
           viewportH: viewportH,
         });
       }
@@ -1158,7 +1158,7 @@ export const Util = {
         diff.push({
           viewportX: viewportX - absDeltaX,
           viewportY: viewportY - absDeltaY,
-          viewportW: absDeltaX,
+          viewportW: Math.min(viewportW, absDeltaX),
           viewportH: viewportH,
         });
       }
@@ -1167,7 +1167,7 @@ export const Util = {
           viewportX: viewportX - absDeltaX,
           viewportY: viewportY - absDeltaY,
           viewportW: viewportW,
-          viewportH: absDeltaY,
+          viewportH: Math.min(viewportH, absDeltaY),
         });
       }
       return { src, dst, diff };

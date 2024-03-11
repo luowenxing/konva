@@ -198,7 +198,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     // for transform the cache can be NOT empty
     // but we still need to recalculate it if it is dirty
     var isTransform = attr === TRANSFORM || attr === ABSOLUTE_TRANSFORM;
-    var invalid = cache === undefined || (isTransform && cache.dirty === true);
+    var invalid = cache === undefined || (isTransform);
 
     // if not cached, we need to set it using the private getter method.
     if (invalid) {

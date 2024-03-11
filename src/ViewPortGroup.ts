@@ -166,13 +166,12 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
       const { src, dst } = this.reuseViewport;
       const { viewportX: srcX, viewportY: srcY, viewportW: srcW, viewportH: srcH } = src;
       const { viewportX: dstX, viewportY: dstY, viewportW: dstW, viewportH: dstH  } = dst;
-      const { _cacheCanvas } = canvas;
+      const { _cacheCanvas, pixelRatio } = canvas;
       context.save()
       context.setTransform(1, 0, 0, 1, 0, 0);
-      const pixel = 2;
       context.drawImage(_cacheCanvas,
-        srcX * pixel, srcY * pixel, srcW * pixel, srcH * pixel,
-        dstX * pixel, dstY * pixel, dstW * pixel, dstH * pixel,
+        srcX * pixelRatio, srcY * pixelRatio, srcW * pixelRatio, srcH * pixelRatio,
+        dstX * pixelRatio, dstY * pixelRatio, dstW * pixelRatio, dstH * pixelRatio,
       )
       context.restore();
       this.reuseViewport = null;

@@ -26,10 +26,10 @@ export type ViewPortGroupConfig = ContainerConfig & IViewPort;
  * var group = new Konva.Group();
  */
 export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
-  private diffViewport: IViewPort | undefined;
   private reuseViewport: {
     src: IViewPort;
     dst: IViewPort; 
+    diff: IViewPort[];
   } | undefined;
 
   private viewportChildren: (viewport: IViewPort) => Shape[];
@@ -39,51 +39,24 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
     this.viewportChildren = props.viewportChildren;
   }
 
-  moveViewport(deltaX: number, deltaY: number) {
+  private getViewport() {
     const viewportX = this.viewportX();
     const viewportY = this.viewportY();
     const viewportW = this.viewportW();
     const viewportH = this.viewportH();
+    const viewport = { viewportX, viewportY, viewportW, viewportH };
+    return viewport;
+  }
 
-    if (deltaX > 0) {
-      this.diffViewport = {
-        viewportX: viewportX + viewportW,
-        viewportY,
-        viewportW: Math.abs(deltaX),
-        viewportH: viewportH,
-      };
-    } else if (deltaX < 0) {
-      this.diffViewport = {
-        viewportX: viewportX - Math.abs(deltaX),
-        viewportY,
-        viewportW: Math.abs(deltaX),
-        viewportH: viewportH,
-      };
-    }
-    if (deltaY > 0) {
-      this.diffViewport = {
-        viewportX,
-        viewportY: viewportY + viewportH,
-        viewportW: viewportW,
-        viewportH: Math.abs(deltaY),
-      }
-    } else if (deltaY < 0) {
-      this.diffViewport = {
-        viewportX,
-        viewportY: viewportY - Math.abs(deltaY),
-        viewportW: viewportW,
-        viewportH: Math.abs(deltaY),
-      }
-    }
+  moveViewport(deltaX: number, deltaY: number) {
+    const viewport = this.getViewport();
+    this.reuseViewport = Util.calcReuseViewport(viewport, deltaX, deltaY);
 
-    this.reuseViewport = Util.makeReuseViewport(viewportW, viewportH, deltaX, deltaY);
-
-    console.log(`diffViewport: ${JSON.stringify(this.diffViewport)}`)
     console.log(`reuseViewport: ${JSON.stringify(this.reuseViewport)}`)
 
     Konva.autoDrawEnabled = false;
-    this.viewportX(viewportX + deltaX);
-    this.viewportY(viewportY + deltaY);
+    this.viewportX(viewport.viewportX + deltaX);
+    this.viewportY(viewport.viewportY + deltaY);
     Konva.autoDrawEnabled = true;
     this.getLayer()?.draw();
   }
@@ -143,13 +116,19 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
       context._applyGlobalCompositeOperation(this);
     }
     
-    const viewport = this.diffViewport || {
-      viewportX: this.viewportX(),
-      viewportY: this.viewportY(),
-      viewportW: this.viewportW(),
-      viewportH: this.viewportH(),
+    const viewport = this.getViewport();
+    const viewports: IViewPort[] = [];
+    if (this.reuseViewport) {
+      const { diff } = this.reuseViewport;
+      viewports.push(...diff);
+    } else {
+      viewports.push(viewport);
     }
-    const children = this.viewportChildren ? this.viewportChildren(viewport) : this.children;
+    const children: Shape[] = [];
+    viewports.forEach((vp) => {
+      const result = this.viewportChildren(vp);
+      children.push(...result);
+    })
 
     children?.forEach(function (child) {
       child[drawMethod](canvas, top, bufferCanvas);
@@ -174,8 +153,7 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
         dstX * pixelRatio, dstY * pixelRatio, dstW * pixelRatio, dstH * pixelRatio,
       )
       context.restore();
-      this.reuseViewport = null;
-      this.diffViewport = null;
+      this.reuseViewport = undefined;
     }
   }
 

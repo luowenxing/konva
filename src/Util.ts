@@ -1048,56 +1048,129 @@ export const Util = {
   isValidViewport(viewport: IViewPort) {
     return viewport.viewportX >= 0 && viewport.viewportY >= 0 && viewport.viewportW >= 0 && viewport.viewportH >= 0;
   },
-  makeReuseViewport(viewportW: number, viewportH: number, deltaX: number, deltaY: number): {
+  calcReuseViewport(viewport: IViewPort, deltaX: number, deltaY: number): {
     src: IViewPort;
-    dst: IViewPort; 
+    dst: IViewPort;
+    diff: IViewPort[];
   } | undefined {
-    if (deltaX > 0) {
-    
-    } else if (deltaX < 0) {
+    const { viewportX, viewportY, viewportW, viewportH } = viewport;
+    const diff: IViewPort[] = [];
 
-    }
-
-    // 处理deltaY
     const absDeltaY = Math.abs(deltaY);
-    const vY1 = {
-      viewportX: 0,
-      viewportY: absDeltaY,
-      viewportW,
-      viewportH:  viewportH - absDeltaY,
-    };
-    const vY2 = {
-      viewportX: 0,
-      viewportY: 0,
-      viewportW,
-      viewportH:  viewportH - absDeltaY
-    }
-
-    if (deltaY > 0) {
-      return { src: vY1, dst: vY2 };
-    } else if (deltaY < 0) {
-      return { src: vY2, dst: vY1 };
-    }
-
-    // 处理deltaX
     const absDeltaX = Math.abs(deltaX);
-    const vX1 = {
-      viewportX: 0,
-      viewportY: 0,
-      viewportW: viewportW - absDeltaX,
-      viewportH,
-    };
-    const vX2 = {
-      viewportX: absDeltaX,
-      viewportY: 0,
-      viewportW: viewportW - absDeltaX,
-      viewportH: viewportH
-    };
 
-    if (deltaX > 0) {
-      return { src: vX2, dst: vX1 };
-    } else if (deltaX < 0) {
-      return { src: vX1, dst: vX2 };
+    if (deltaX > 0 && deltaY > 0) {
+      const src = {
+        viewportX: absDeltaX,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const dst = {
+        viewportX: 0,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY
+      };
+      const diff = [{
+        viewportX: viewportX + viewportW,
+        viewportY: viewportY + absDeltaY,
+        viewportW: absDeltaX,
+        viewportH: viewportH,
+      }, {
+        viewportX: viewportX + absDeltaX,
+        viewportY: viewportY + viewportH,
+        viewportW: viewportW,
+        viewportH: absDeltaY,
+      }];
+      return { src, dst, diff };
+    } else if (deltaX > 0 && deltaY <= 0) {
+      const src = {
+        viewportX: absDeltaX,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const dst = {
+        viewportX: 0,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY
+      };
+      const diff = [{
+        viewportX: viewportX + viewportW,
+        viewportY: viewportY -  absDeltaY,
+        viewportW: absDeltaX,
+        viewportH: viewportH,
+      }];
+      if (deltaY !== 0) {
+        diff.push({
+          viewportX: viewportX + absDeltaX,
+          viewportY: viewportY -  absDeltaY,
+          viewportW,
+          viewportH: absDeltaY,
+        });
+      }
+      return { src, dst, diff };
+    } else if (deltaX <= 0 && deltaY > 0) {
+      const src = {
+        viewportX: 0,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const dst = {
+        viewportX: absDeltaX,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const diff = [{
+        viewportX: viewportX - absDeltaX,
+        viewportY: viewportY + viewportH,
+        viewportW: viewportW,
+        viewportH: absDeltaY,
+      }];
+      if (deltaX !== 0) {
+        diff.push({
+          viewportX: viewportX - absDeltaX,
+          viewportY: viewportY + absDeltaY,
+          viewportW: absDeltaX,
+          viewportH: viewportH,
+        });
+      }
+      return { src, dst, diff };
+    } else if (deltaX <=0 && deltaY <= 0) {
+      const src = {
+        viewportX: 0,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY
+      };
+      const dst = {
+        viewportX: absDeltaX,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const diff: IViewPort[] = [];
+      if (deltaX !== 0) {
+        diff.push({
+          viewportX: viewportX - absDeltaX,
+          viewportY: viewportY - absDeltaY,
+          viewportW: absDeltaX,
+          viewportH: viewportH,
+        });
+      }
+      if (deltaY !== 0) {
+        diff.push({
+          viewportX: viewportX - absDeltaX,
+          viewportY: viewportY - absDeltaY,
+          viewportW: viewportW,
+          viewportH: absDeltaY,
+        });
+      }
+      return { src, dst, diff };
     }
   },
 };

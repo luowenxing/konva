@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
     "outDir": "cmj",
-    "module": "ESNext",
-    "target": "es6",
+    "module": "CommonJS",
+    "target": "ES2015",
     "noEmitOnError": true,
-    "lib": ["es6", "dom"],
+    "lib": ["ES2015", "dom"],
     "moduleResolution": "node",
     "declaration": true,
     "removeComments": true

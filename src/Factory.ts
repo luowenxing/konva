@@ -4,19 +4,6 @@ import { getComponentValidator } from './Validators';
 var GET = 'get',
   SET = 'set';
 
-const DirtyAttrs = [
-  'x',
-  'y',
-  'width',
-  'height',
-  'size',
-  'position',
-  'absolutePosition',
-  'visible',
-];
-
-const clipFunc = 'clipFunc';
-
 export const Factory = {
   addGetterSetter(constructor, attr, def?, validator?, after?) {
     Factory.addGetter(constructor, attr, def);
@@ -43,21 +30,12 @@ export const Factory = {
   },
   overWriteSetter(constructor, attr, validator?, after?) {
     var method = SET + Util._capitalize(attr);
-    constructor.prototype[method] = function (val, update = true) {
+    constructor.prototype[method] = function (val) {
       if (validator && val !== undefined && val !== null) {
         val = validator.call(this, val, attr);
       }
 
       this._setAttr(attr, val);
-
-      // 如果修改了布局相关的属性
-      if (DirtyAttrs.includes(attr) && update) {
-        this.batchUpdateRBush();
-      }
-      // 如果是 clipFunc
-      if (clipFunc === attr) {
-        this.collectClip?.(val);
-      }
 
       if (after) {
         after.call(this);

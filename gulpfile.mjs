@@ -2,6 +2,8 @@ import gulp from 'gulp';
 import rename from 'gulp-rename';
 import uglify from 'gulp-uglify-es';
 import replace from 'gulp-replace';
+import jsdoc from 'gulp-jsdoc3';
+import connect from 'gulp-connect';
 import gutil from 'gulp-util';
 
 import fs from 'fs';
@@ -82,5 +84,27 @@ gulp.task(
   'build',
   gulp.parallel([
     'update-version-lib',
+    'update-version-cmj',
+    // 'update-version-es-to-cmj-index',
+    // 'update-version-es-to-cmj-node',
+    'pre-build',
   ])
 );
+
+// local server for better development
+gulp.task('server', function () {
+  connect.server();
+});
+
+// // generate documentation
+gulp.task('api', function () {
+  return gulp.src('./konva.js').pipe(
+    jsdoc({
+      opts: {
+        destination: './api',
+      },
+    })
+  );
+});
+
+gulp.task('default', gulp.parallel(['server']));

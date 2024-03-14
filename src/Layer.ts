@@ -354,39 +354,34 @@ export class Layer extends Container<Group | Shape> {
     }
   }
   _getIntersection(pos: Vector2d): { shape?: Shape; antialiased?: boolean } {
-    const x = Math.round(pos.x);
-    const y = Math.round(pos.y);
-    
-    const stage = this.getStage();
-    let results = stage?.rbushPool?.search?.({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
-    // 兜底操作，如果当前匹配到的不在 layer 树上，就过滤掉
-    results = results.filter(result => shapes[result.id]?.getLayer()) ?? [];
-    if (!results || results.length === 0) {
-      return {};
-    }
-    // 优先匹配带 actionKey 的
-    const actionKeyResults = results.filter(result => result.hasActionKey);
-    if (actionKeyResults.length > 0) {
-      results = actionKeyResults;
-    }
+    const ratio = this.hitCanvas.pixelRatio;
+    const p = this.hitCanvas.context.getImageData(
+      Math.round(pos.x * ratio),
+      Math.round(pos.y * ratio),
+      1,
+      1
+    ).data;
+    const p3 = p[3];
 
-    let rNode = results[0];
-    // 根据 id 来判断匹配到哪个 shape（后续需要根据 z-index 判断）
-    results.forEach(result => {
-        if (rNode.id <= result.id) {
-            rNode = result;
-        }
-    });
-    if (!rNode) {
-        return {};
-    }
-    const shape = shapes[rNode.id];
-    if (shape) {
+    // fully opaque pixel
+    if (p3 === 255) {
+      const colorKey = Util._rgbToHex(p[0], p[1], p[2]);
+      const shape = shapes[HASH + colorKey];
+      if (shape) {
+        return {
+          shape: shape,
+        };
+      }
       return {
-        shape
+        antialiased: true,
+      };
+    } else if (p3 > 0) {
+      // antialiased pixel
+      return {
+        antialiased: true,
       };
     }
-
+    // empty pixel
     return {};
   }
   drawScene(can?: SceneCanvas, top?: Node) {

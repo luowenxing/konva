@@ -9,7 +9,6 @@ import { Layer } from './Layer';
 import { DD } from './DragAndDrop';
 import { _registerNode } from './Global';
 import * as PointerEvents from './PointerEvents';
-import RBushPool from './rbush-pool';
 
 export interface StageConfig extends ContainerConfig {
   container: HTMLDivElement | string;
@@ -175,8 +174,6 @@ export class Stage extends Container<Layer> {
   _touchDblTimeout: any;
   _pointerDblTimeout: any;
 
-  rbushPool = new RBushPool(); // r-tree 需要隔离，支持多实例模式
-
   constructor(config: StageConfig) {
     super(checkNoClip(config));
     this._buildDOM();
@@ -283,7 +280,7 @@ export class Stage extends Container<Layer> {
     }
 
     Util.releaseCanvas(this.bufferCanvas._canvas, this.bufferHitCanvas._canvas)
-    this.rbushPool.clear();
+
     return this;
   }
   /**

@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+### 8.4.2 (2023-01-20)
+
+- Fix justify on text with limited height
+
+### 8.4.1 (2023-01-19)
+
+- Typescript fixes for `container.add()` method. Ability to use empty array as argument. E.g. `container.add(...emptyArray)`
+- Fix underline for justify text
+- Fix gradient display on underline or line-through text
+
+### 8.4.0 (2023-01-05)
+
+- Add support for `cornerRadius` for Konva.Image
+- Fix cloning of `Konva.Transformer`
+
 ### 8.3.14 (2022-11-09)
 
 - Automatically release (destroy) used canvas elements. Should fix safari memory issues

@@ -1,7 +1,6 @@
 import { Factory } from './Factory';
 import { Node, NodeConfig } from './Node';
 import { getNumberValidator } from './Validators';
-import { Util } from './Util';
 
 import { GetSet, IRect } from './types';
 import { Shape } from './Shape';
@@ -31,9 +30,6 @@ export abstract class Container<
   ChildType extends Node = Node
 > extends Node<ContainerConfig> {
   children: Array<ChildType> | undefined = [];
-  rbushShapes = [];
-  _waitingForBatchAddRBush = false;
-  clipRect: IRect;
 
   /**
    * returns an array of direct descendant nodes
@@ -86,11 +82,7 @@ export abstract class Container<
       child.index = 0;
       child.remove();
     });
-    // removeChildren 只会移除 children，不会递归孙子节点
-    // 所以这里需要递归删除 r-tree 里面的节点
-    this.removeFromRBush();
     this.children = [];
-    this.rbushShapes = [];
     // because all children were detached from parent, request draw via container
     this._requestDraw();
     return this;
@@ -108,7 +100,6 @@ export abstract class Container<
       child.destroy();
     });
     this.children = [];
-    this.rbushShapes = [];
     // because all children were detached from parent, request draw via container
     this._requestDraw();
     return this;
@@ -118,22 +109,27 @@ export abstract class Container<
    * add a child and children into container
    * @name Konva.Container#add
    * @method
-   * @param {...Konva.Node} child
+   * @param {...Konva.Node} children
    * @returns {Container}
    * @example
    * layer.add(rect);
    * layer.add(shape1, shape2, shape3);
+   * // empty arrays are accepted, though each individual child must be defined
+   * layer.add(...shapes);
    * // remember to redraw layer if you changed something
    * layer.draw();
    */
   add(...children: ChildType[]) {
-    if (arguments.length > 1) {
-      for (var i = 0; i < arguments.length; i++) {
-        this.add(arguments[i]);
+    if (children.length === 0) {
+      return this;
+    }
+    if (children.length > 1) {
+      for (var i = 0; i < children.length; i++) {
+        this.add(children[i]);
       }
       return this;
     }
-    var child = children[0];
+    const child = children[0];
     if (child.getParent()) {
       child.moveTo(this);
       return this;
@@ -146,139 +142,10 @@ export abstract class Container<
     this._fire('add', {
       child: child,
     });
-    this.addToRBush(child);
     this._requestDraw();
     // chainable
     return this;
   }
-  // 添加到 r-tree
-  addToRBush(child: Node<NodeConfig>) {
-    this.rbushShapes.push(child);
-    // 异步添加性能更好，也可以避免此时还没有添加父节点
-    if (!this._waitingForBatchAddRBush) {
-      this._waitingForBatchAddRBush = true;
-      Util.requestAnimFrame(this.batchAddRBush);
-    }
-  }
-
-  getMinClipRect() {
-    let container: any = this;
-    let rect = {
-        minX: 0,
-        minY: 0,
-        maxX: 0,
-        maxY: 0,
-    };
-
-    while (container) {
-        const { clipRect } = container;
-        if (!clipRect) {
-            container = container.parent;
-            continue;
-        }
-        const matrix = container.getAbsoluteTransform().getMatrix();
-        if (!matrix) {
-            container = container.parent;
-            continue;
-        }
-        const x = matrix[4];
-        const y = matrix[5];
-        rect.minX = Math.max(rect.minX, x + clipRect.x);
-        rect.minY = Math.max(rect.minY, y + clipRect.y);
-        if (rect.maxX <= 0) {
-            rect.maxX = x + clipRect.x + clipRect.width;
-        } else {
-            rect.maxX = Math.min(rect.maxX, x + clipRect.x + clipRect.width);
-        }
-
-        if (rect.maxY <= 0) {
-            rect.maxY = y + clipRect.y + clipRect.height;
-        } else {
-            rect.maxY = Math.min(rect.maxY, y + clipRect.y + clipRect.height);
-        }
-
-        container = container.parent;
-    }
-
-    return rect;
-  }
-  /**
-   * 批量插入 r-tree
-   */
-  batchAddRBush = () => {
-    if (this.rbushShapes.length === 0 || !this.parent) {
-      this._waitingForBatchAddRBush = false;
-      return;
-    }
-
-    const rbushNodes = [];
-    this.rbushShapes.forEach(shape => {
-      // 如果当前节点是 group，或者没有开启事件，或者没有 layer 节点，那么就不加入 r-tree
-      if (shape instanceof Container || !shape.listening() || !shape.getLayer()) {
-        return;
-      }
-
-      const stage = this.getStage();
-      // 如果 r-tree 里面已经有当前节点，那么就退出
-      if (stage?.rbushPool?.has?.(shape._id)) {
-        return;
-      }
-      // 获取尺寸
-      const size = shape.size();
-      if (!size) {
-          return;
-      }
-      // 获取位置矩阵
-      const matrix = shape.getAbsoluteTransform().getMatrix();
-      const x = matrix[4];
-      const y = matrix[5];
-      const { width = 0, height = 0 } = size;
-      if ([x, y, width, height].some(num => Util.isNaN(num))) {
-          return;
-      }
-
-      // 创建 rbush 节点
-      const rbushNode = {
-        minX: x,
-        minY: y,
-        maxX: x + width,
-        maxY: y + height,
-        id: shape._id,
-        hasActionKey: shape.attrs.SmartSheetCanvasActionKey,
-      };
-      // 处理父节点有 clip 的情况，计算最小的包围盒
-      const minClipRect = this.getMinClipRect();
-      if (minClipRect.minX > 0) {
-          rbushNode.minX = Math.max(minClipRect.minX, rbushNode.minX);
-      }
-      if (minClipRect.minY > 0) {
-          rbushNode.minY = Math.max(minClipRect.minY, rbushNode.minY);
-      }
-      if (minClipRect.maxX > 0) {
-          rbushNode.maxX = Math.min(rbushNode.maxX, minClipRect.maxX);
-      }
-      if (minClipRect.maxY > 0) {
-          rbushNode.maxY = Math.min(rbushNode.maxY, minClipRect.maxY);
-      }
-
-      rbushNodes.push(rbushNode);
-    });
-
-    if (rbushNodes.length > 0) {
-      const stage = this.getStage();
-      // 批量加载，性能更优
-      stage?.rbushPool?.load?.(rbushNodes);
-    }
-
-    this.rbushShapes = [];
-    this._waitingForBatchAddRBush = false;
-  }
-
-  removeFromRBush() {
-    super.removeFromRBush();
-    this.children?.forEach(child => child.removeFromRBush());
-  }
-
   destroy() {
     if (this.hasChildren()) {
       this.destroyChildren();
@@ -561,24 +428,6 @@ export abstract class Container<
     if (hasClip) {
       context.restore();
     }
-  }
-
-  collectClip(clipFunc: (ctx) => void | null) {
-    if (clipFunc === null) {
-      this.clipRect = null;
-      return;
-    }
-    const ctx = {
-      rect: (x, y, width, height) => {
-        this.clipRect = {
-          x,
-          y,
-          width,
-          height
-        };
-      }
-    };
-    clipFunc(ctx);
   }
 
   getClientRect(config?: {

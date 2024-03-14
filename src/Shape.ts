@@ -183,7 +183,18 @@ export class Shape<
 
   constructor(config?: Config) {
     super(config);
-    shapes[this._id] = this;
+    // set colorKey
+    let key: string;
+
+    while (true) {
+      key = Util.getRandomColor();
+      if (key && !(key in shapes)) {
+        break;
+      }
+    }
+
+    this.colorKey = key;
+    shapes[key] = this;
   }
 
   getContext() {
@@ -433,7 +444,7 @@ export class Shape<
 
   destroy() {
     Node.prototype.destroy.call(this);
-    delete shapes[this._id];
+    delete shapes[this.colorKey];
     delete this.colorKey;
     return this;
   }

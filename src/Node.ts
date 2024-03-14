@@ -160,12 +160,10 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
   _dragEventId: number | null = null;
   _shouldFireChangeEvents = false;
 
-  _waitingForUpdateRBush = false;
-
   constructor(config?: Config) {
     // on initial set attrs wi don't need to fire change events
     // because nobody is listening to them yet
-    this.setAttrs(config, false);
+    this.setAttrs(config);
     this._shouldFireChangeEvents = true;
 
     // all change event listeners are attached to the prototype
@@ -849,131 +847,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
       parent._setChildrenIndices();
       this.parent = null;
     }
-    this.removeFromRBush();
   }
-  // 从 r-tree 移除
-  removeFromRBush() {
-    const stage = this.getStage();
-    stage?.rbushPool?.delete?.(this._id);
-  }
-
-  /**
-   * 批量更新 r-tree
-   * @returns 
-   */
-  batchUpdateRBush() {
-    if (!this._waitingForUpdateRBush) {
-      this._waitingForUpdateRBush = true;
-      Util.requestAnimFrame(this.updateRBush);
-    }
-  }
-
-  updateRBush = () => {
-    // 没有父节点，直接return
-    if (!this.parent) {
-      this._waitingForUpdateRBush = false;
-      return;
-    }
-    if (this instanceof Container) {
-      this.getChildren().forEach(child => child.updateRBush());
-      this._waitingForUpdateRBush = false;
-      return;
-    }
-    if (!this.listening()) {
-      this._waitingForUpdateRBush = false;
-      return;
-    }
-    const clientRect = this.size();
-    if (!clientRect) {
-      this._waitingForUpdateRBush = false;
-      return;
-    }
-
-    const matrix = this.getAbsoluteTransform().getMatrix();
-    const x = matrix[4];
-    const y = matrix[5];
-    
-    const stage = this.getStage();
-    const rNode = stage?.rbushPool?.get?.(this._id);
-    const { width, height } = clientRect;
-
-    if ([x, y, width, height].some(num => Util.isNaN(num))) {
-      return;
-    }
-    const node = {
-      minX: x,
-      minY: y,
-      maxX: x + width,
-      maxY: y + height,
-      id: this._id,
-      hasActionKey: this.attrs.SmartSheetCanvasActionKey,
-    };
-
-    const minClipRect = this.getMinClipRect();
-    if (minClipRect.minX > 0) {
-      node.minX = Math.max(minClipRect.minX, node.minX);
-    }
-    if (minClipRect.minY > 0) {
-      node.minY = Math.max(minClipRect.minY, node.minY);
-    }
-    if (minClipRect.maxX > 0) {
-      node.maxX = Math.min(node.maxX, minClipRect.maxX);
-    }
-    if (minClipRect.maxY > 0) {
-      node.maxY = Math.min(node.maxY, minClipRect.maxY);
-    }
-
-    if (!rNode && !stage?.rbushPool?.has?.(node.id)) {
-      stage?.rbushPool?.add?.(node);
-    }
-    else {
-      stage?.rbushPool?.update?.(node);
-    }
-    this._waitingForUpdateRBush = false;
-  };
-
-  getMinClipRect() {
-    let container: any = this;
-    let rect = {
-      minX: 0,
-      minY: 0,
-      maxX: 0,
-      maxY: 0,
-    };
-
-    while (container) {
-      const { clipRect } = container;
-      if (!clipRect) {
-          container = container.parent;
-          continue;
-      }
-      const matrix = container.getAbsoluteTransform().getMatrix();
-      if (!matrix) {
-          container = container.parent;
-          continue;
-      }
-      const x = matrix[4];
-      const y = matrix[5];
-      rect.minX = Math.max(rect.minX, x + clipRect.x);
-      rect.minY = Math.max(rect.minY, y + clipRect.y);
-      if (rect.maxX <= 0) {
-          rect.maxX = x + clipRect.x + clipRect.width;
-      } else {
-          rect.maxX = Math.min(rect.maxX, x + clipRect.x + clipRect.width);
-      }
-
-      if (rect.maxY <= 0) {
-          rect.maxY = y + clipRect.y + clipRect.height;
-      } else {
-          rect.maxY = Math.min(rect.maxY, y + clipRect.y + clipRect.height);
-      }
-
-      container = container.parent;
-    }
-
-    return rect;
-  }
-
   /**
    * remove and destroy a node. Kill it and delete forever! You should not reuse node after destroy().
    * If the node is a container (Group, Stage or Layer) it will destroy all children too.
@@ -1039,7 +913,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
    * @method
    * @name Konva.Node#setAttrs
    * @param {Object} config object containing key value pairs
-   * @param {Boolean} update 控制是否触发更新
    * @returns {Konva.Node}
    * @example
    * node.setAttrs({
@@ -1047,7 +920,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
    *   fill: 'red'
    * });
    */
-  setAttrs(config: any, update = true) {
+  setAttrs(config: any) {
     this._batchTransformChanges(() => {
       var key, method;
       if (!config) {
@@ -1060,7 +933,7 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
         method = SET + Util._capitalize(key);
         // use setter if available
         if (Util._isFunction(this[method])) {
-          this[method](config[key], update);
+          this[method](config[key]);
         } else {
           // otherwise set directly
           this._setAttr(key, config[key]);
@@ -1130,7 +1003,24 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     }
   }
   shouldDrawHit(top?: Node, skipDragCheck = false) {
-    return false;
+    if (top) {
+      return this._isVisible(top) && this._isListening(top);
+    }
+    var layer = this.getLayer();
+
+    var layerUnderDrag = false;
+    DD._dragElements.forEach((elem) => {
+      if (elem.dragStatus !== 'dragging') {
+        return;
+      } else if (elem.node.nodeType === 'Stage') {
+        layerUnderDrag = true;
+      } else if (elem.node.getLayer() === layer) {
+        layerUnderDrag = true;
+      }
+    });
+
+    var dragSkip = !skipDragCheck && !Konva.hitOnDragEnabled && layerUnderDrag;
+    return this.isListening() && this.isVisible() && !dragSkip;
   }
 
   /**

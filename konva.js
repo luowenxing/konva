@@ -1,18 +1,14 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('rbush')) :
-  typeof define === 'function' && define.amd ? define(['rbush'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Konva = factory(global.RBush));
-})(this, (function (RBush) { 'use strict';
-
-  function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-  var RBush__default = /*#__PURE__*/_interopDefaultLegacy(RBush);
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Konva = factory());
+})(this, (function () { 'use strict';
 
   /*
-   * Konva JavaScript Framework v8.3.15-beta.1
+   * Konva JavaScript Framework v8.4.2
    * http://konvajs.org/
    * Licensed under the MIT
-   * Date: Tue Nov 29 2022
+   * Date: Fri Jan 20 2023
    *
    * Original work Copyright (C) 2011 - 2013 by Eric Rowell (KineticJS)
    * Modified work Copyright (C) 2014 - present by Anton Lavrenov (Konva)
@@ -39,7 +35,7 @@
               : {};
   const Konva$2 = {
       _global: glob,
-      version: '8.3.15-beta.1',
+      version: '8.4.2',
       isBrowser: detectBrowser(),
       isUnminified: /param/.test(function (param) { }.toString()),
       dblClickWindow: 400,
@@ -432,7 +428,7 @@
       }
   }
   // CONSTANTS
-  var OBJECT_ARRAY = '[object Array]', OBJECT_NUMBER = '[object Number]', OBJECT_STRING = '[object String]', OBJECT_BOOLEAN = '[object Boolean]', PI_OVER_DEG180 = Math.PI / 180, DEG180_OVER_PI = 180 / Math.PI, HASH = '#', EMPTY_STRING$1 = '', ZERO = '0', KONVA_WARNING = 'Konva warning: ', KONVA_ERROR = 'Konva error: ', RGB_PAREN = 'rgb(', COLORS = {
+  var OBJECT_ARRAY = '[object Array]', OBJECT_NUMBER = '[object Number]', OBJECT_STRING = '[object String]', OBJECT_BOOLEAN = '[object Boolean]', PI_OVER_DEG180 = Math.PI / 180, DEG180_OVER_PI = 180 / Math.PI, HASH$1 = '#', EMPTY_STRING$1 = '', ZERO = '0', KONVA_WARNING = 'Konva warning: ', KONVA_ERROR = 'Konva error: ', RGB_PAREN = 'rgb(', COLORS = {
       aliceblue: [240, 248, 255],
       antiquewhite: [250, 235, 215],
       aqua: [0, 255, 255],
@@ -691,7 +687,7 @@
           return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
       },
       _hexToRgb(hex) {
-          hex = hex.replace(HASH, EMPTY_STRING$1);
+          hex = hex.replace(HASH$1, EMPTY_STRING$1);
           var bigint = parseInt(hex, 16);
           return {
               r: (bigint >> 16) & 255,
@@ -711,7 +707,7 @@
           while (randColor.length < 6) {
               randColor = ZERO + randColor;
           }
-          return HASH + randColor;
+          return HASH$1 + randColor;
       },
       /**
        * get RGB components of a color
@@ -735,7 +731,7 @@
                   b: rgb[2],
               };
           }
-          else if (color[0] === HASH) {
+          else if (color[0] === HASH$1) {
               // hex
               return this._hexToRgb(color.substring(1));
           }
@@ -763,7 +759,9 @@
           str = str || 'black';
           return (Util._namedColorToRBA(str) ||
               Util._hex3ColorToRGBA(str) ||
+              Util._hex4ColorToRGBA(str) ||
               Util._hex6ColorToRGBA(str) ||
+              Util._hex8ColorToRGBA(str) ||
               Util._rgbColorToRGBA(str) ||
               Util._rgbaColorToRGBA(str) ||
               Util._hslColorToRGBA(str));
@@ -812,6 +810,17 @@
               };
           }
       },
+      // Parse #nnnnnnnn
+      _hex8ColorToRGBA(str) {
+          if (str[0] === '#' && str.length === 9) {
+              return {
+                  r: parseInt(str.slice(1, 3), 16),
+                  g: parseInt(str.slice(3, 5), 16),
+                  b: parseInt(str.slice(5, 7), 16),
+                  a: parseInt(str.slice(7, 9), 16) / 0xff,
+              };
+          }
+      },
       // Parse #nnnnnn
       _hex6ColorToRGBA(str) {
           if (str[0] === '#' && str.length === 7) {
@@ -820,6 +829,17 @@
                   g: parseInt(str.slice(3, 5), 16),
                   b: parseInt(str.slice(5, 7), 16),
                   a: 1,
+              };
+          }
+      },
+      // Parse #nnnn
+      _hex4ColorToRGBA(str) {
+          if (str[0] === '#' && str.length === 5) {
+              return {
+                  r: parseInt(str[1] + str[1], 16),
+                  g: parseInt(str[2] + str[2], 16),
+                  b: parseInt(str[3] + str[3], 16),
+                  a: parseInt(str[4] + str[4], 16) / 0xff,
               };
           }
       },
@@ -1093,6 +1113,30 @@
               c.width = 0;
               c.height = 0;
           });
+      },
+      drawRoundedRectPath(context, width, height, cornerRadius) {
+          let topLeft = 0;
+          let topRight = 0;
+          let bottomLeft = 0;
+          let bottomRight = 0;
+          if (typeof cornerRadius === 'number') {
+              topLeft = topRight = bottomLeft = bottomRight = Math.min(cornerRadius, width / 2, height / 2);
+          }
+          else {
+              topLeft = Math.min(cornerRadius[0] || 0, width / 2, height / 2);
+              topRight = Math.min(cornerRadius[1] || 0, width / 2, height / 2);
+              bottomRight = Math.min(cornerRadius[2] || 0, width / 2, height / 2);
+              bottomLeft = Math.min(cornerRadius[3] || 0, width / 2, height / 2);
+          }
+          context.moveTo(topLeft, 0);
+          context.lineTo(width - topRight, 0);
+          context.arc(width - topRight, topRight, topRight, (Math.PI * 3) / 2, 0, false);
+          context.lineTo(width, height - bottomRight);
+          context.arc(width - bottomRight, height - bottomRight, bottomRight, 0, Math.PI / 2, false);
+          context.lineTo(bottomLeft, height);
+          context.arc(bottomLeft, height - bottomLeft, bottomLeft, Math.PI / 2, Math.PI, false);
+          context.lineTo(0, topLeft);
+          context.arc(topLeft, topLeft, topLeft, Math.PI, (Math.PI * 3) / 2, false);
       }
   };
 
@@ -1753,8 +1797,11 @@
        * @method
        * @name Konva.Context#isPointInPath
        */
-      isPointInPath(x, y) {
-          return this._context.isPointInPath(x, y);
+      isPointInPath(x, y, path, fillRule) {
+          if (path) {
+              return this._context.isPointInPath(path, x, y, fillRule);
+          }
+          return this._context.isPointInPath(x, y, fillRule);
       }
       /**
        * fill function.
@@ -2448,30 +2495,6 @@
       window.addEventListener('touchend', DD._endDragAfter, false);
   }
 
-  class RBushPool {
-      constructor() {
-          this.rNodes = new Map();
-          this.rbush = new RBush__default["default"]();
-      }
-      add(item) {
-          this.rbush.insert(item);
-          this.rNodes.set(item.id, item);
-      }
-      delete(id) {
-          const node = this.rNodes.get(id);
-          if (node) {
-              this.rbush.remove(node);
-          }
-      }
-      clear() {
-          this.rbush.clear();
-      }
-      search(rect) {
-          return this.rbush.search(rect);
-      }
-  }
-  var rbush = new RBushPool();
-
   // CONSTANTS
   var ABSOLUTE_OPACITY = 'absoluteOpacity', ALL_LISTENERS = 'allEventListeners', ABSOLUTE_TRANSFORM = 'absoluteTransform', ABSOLUTE_SCALE = 'absoluteScale', CANVAS = 'canvas', CHANGE = 'Change', CHILDREN = 'children', KONVA = 'konva', LISTENING = 'listening', MOUSEENTER$1 = 'mouseenter', MOUSELEAVE$1 = 'mouseleave', SET = 'set', SHAPE = 'Shape', SPACE$1 = ' ', STAGE$1 = 'stage', TRANSFORM = 'transform', UPPER_STAGE = 'Stage', VISIBLE = 'visible', TRANSFORM_CHANGE_STR$1 = [
       'xChange.konva',
@@ -3082,12 +3105,7 @@
               parent.children.splice(this.index, 1);
               parent._setChildrenIndices();
               this.parent = null;
-              this.removeFromRBush();
           }
-      }
-      // 从 r-tree 移除
-      removeFromRBush() {
-          rbush.delete(this._id);
       }
       /**
        * remove and destroy a node. Kill it and delete forever! You should not reuse node after destroy().
@@ -3243,7 +3261,24 @@
           }
       }
       shouldDrawHit(top, skipDragCheck = false) {
-          return false;
+          if (top) {
+              return this._isVisible(top) && this._isListening(top);
+          }
+          var layer = this.getLayer();
+          var layerUnderDrag = false;
+          DD._dragElements.forEach((elem) => {
+              if (elem.dragStatus !== 'dragging') {
+                  return;
+              }
+              else if (elem.node.nodeType === 'Stage') {
+                  layerUnderDrag = true;
+              }
+              else if (elem.node.getLayer() === layer) {
+                  layerUnderDrag = true;
+              }
+          });
+          var dragSkip = !skipDragCheck && !Konva$2.hitOnDragEnabled && layerUnderDrag;
+          return this.isListening() && this.isVisible() && !dragSkip;
       }
       /**
        * show node. set visible = true
@@ -5320,22 +5355,27 @@
        * add a child and children into container
        * @name Konva.Container#add
        * @method
-       * @param {...Konva.Node} child
+       * @param {...Konva.Node} children
        * @returns {Container}
        * @example
        * layer.add(rect);
        * layer.add(shape1, shape2, shape3);
+       * // empty arrays are accepted, though each individual child must be defined
+       * layer.add(...shapes);
        * // remember to redraw layer if you changed something
        * layer.draw();
        */
       add(...children) {
-          if (arguments.length > 1) {
-              for (var i = 0; i < arguments.length; i++) {
-                  this.add(arguments[i]);
+          if (children.length === 0) {
+              return this;
+          }
+          if (children.length > 1) {
+              for (var i = 0; i < children.length; i++) {
+                  this.add(children[i]);
               }
               return this;
           }
-          var child = children[0];
+          const child = children[0];
           if (child.getParent()) {
               child.moveTo(this);
               return this;
@@ -5350,30 +5390,6 @@
           });
           this._requestDraw();
           // chainable
-          return this;
-      }
-      // 添加到 r-tree
-      addToRBush(child) {
-          const clientRect = child.getClientRect();
-          if (!clientRect) {
-              return;
-          }
-          const matrix = child.getAbsoluteTransform().getMatrix();
-          const x = matrix[4];
-          const y = matrix[5];
-          rbush.add({
-              minX: x,
-              minY: y,
-              maxX: x + clientRect.width,
-              maxY: y + clientRect.height,
-              id: child._id,
-          });
-      }
-      remove() {
-          if (this.hasChildren()) {
-              this.removeChildren();
-          }
-          super.remove();
           return this;
       }
       destroy() {
@@ -6801,7 +6817,16 @@
   class Shape extends Node {
       constructor(config) {
           super(config);
-          shapes[this._id] = this;
+          // set colorKey
+          let key;
+          while (true) {
+              key = Util.getRandomColor();
+              if (key && !(key in shapes)) {
+                  break;
+              }
+          }
+          this.colorKey = key;
+          shapes[key] = this;
       }
       getContext() {
           Util.warn('shape.getContext() method is deprecated. Please do not use it.');
@@ -8252,7 +8277,7 @@
   });
 
   // constants
-  var BEFORE_DRAW = 'beforeDraw', DRAW = 'draw', 
+  var HASH = '#', BEFORE_DRAW = 'beforeDraw', DRAW = 'draw', 
   /*
    * 2 - 3 - 4
    * |       |
@@ -8584,20 +8609,29 @@
           }
       }
       _getIntersection(pos) {
-          const pixelRatio = this.canvas.getPixelRatio();
-          const x = Math.round(pos.x * pixelRatio);
-          const y = Math.round(pos.y * pixelRatio);
-          const results = rbush.search({ minX: x, maxX: x + 1, minY: y, maxY: y + 1 });
-          if (!results) {
-              return {};
-          }
-          const rNode = results[results.length - 1];
-          const shape = shapes[rNode.id];
-          if (shape) {
+          const ratio = this.hitCanvas.pixelRatio;
+          const p = this.hitCanvas.context.getImageData(Math.round(pos.x * ratio), Math.round(pos.y * ratio), 1, 1).data;
+          const p3 = p[3];
+          // fully opaque pixel
+          if (p3 === 255) {
+              const colorKey = Util._rgbToHex(p[0], p[1], p[2]);
+              const shape = shapes[HASH + colorKey];
+              if (shape) {
+                  return {
+                      shape: shape,
+                  };
+              }
               return {
-                  shape
+                  antialiased: true,
               };
           }
+          else if (p3 > 0) {
+              // antialiased pixel
+              return {
+                  antialiased: true,
+              };
+          }
+          // empty pixel
           return {};
       }
       drawScene(can, top) {
@@ -11762,6 +11796,7 @@
       _sceneFunc(context) {
           const width = this.getWidth();
           const height = this.getHeight();
+          const cornerRadius = this.cornerRadius();
           const image = this.attrs.image;
           let params;
           if (image) {
@@ -11784,20 +11819,31 @@
                   params = [image, 0, 0, width, height];
               }
           }
-          if (this.hasFill() || this.hasStroke()) {
+          if (this.hasFill() || this.hasStroke() || cornerRadius) {
               context.beginPath();
-              context.rect(0, 0, width, height);
+              cornerRadius
+                  ? Util.drawRoundedRectPath(context, width, height, cornerRadius)
+                  : context.rect(0, 0, width, height);
               context.closePath();
               context.fillStrokeShape(this);
           }
           if (image) {
+              if (cornerRadius) {
+                  context.clip();
+              }
               context.drawImage.apply(context, params);
           }
+          // If you need to draw later, you need to execute save/restore
       }
       _hitFunc(context) {
-          var width = this.width(), height = this.height();
+          var width = this.width(), height = this.height(), cornerRadius = this.cornerRadius();
           context.beginPath();
-          context.rect(0, 0, width, height);
+          if (!cornerRadius) {
+              context.rect(0, 0, width, height);
+          }
+          else {
+              Util.drawRoundedRectPath(context, width, height, cornerRadius);
+          }
           context.closePath();
           context.fillStrokeShape(this);
       }
@@ -11838,6 +11884,24 @@
   }
   Image.prototype.className = 'Image';
   _registerNode(Image);
+  /**
+   * get/set corner radius
+   * @method
+   * @name Konva.Image#cornerRadius
+   * @param {Number} cornerRadius
+   * @returns {Number}
+   * @example
+   * // get corner radius
+   * var cornerRadius = image.cornerRadius();
+   *
+   * // set corner radius
+   * image.cornerRadius(10);
+   *
+   * // set different corner radius values
+   * // top-left, top-right, bottom-right, bottom-left
+   * image.cornerRadius([0, 10, 20, 30]);
+   */
+  Factory.addGetterSetter(Image, 'cornerRadius', 0, getNumberOrArrayOfNumbersValidator(4));
   /**
    * get/set image source. It can be image, canvas or video element
    * @name Konva.Image#image
@@ -12328,28 +12392,7 @@
               context.rect(0, 0, width, height);
           }
           else {
-              let topLeft = 0;
-              let topRight = 0;
-              let bottomLeft = 0;
-              let bottomRight = 0;
-              if (typeof cornerRadius === 'number') {
-                  topLeft = topRight = bottomLeft = bottomRight = Math.min(cornerRadius, width / 2, height / 2);
-              }
-              else {
-                  topLeft = Math.min(cornerRadius[0] || 0, width / 2, height / 2);
-                  topRight = Math.min(cornerRadius[1] || 0, width / 2, height / 2);
-                  bottomRight = Math.min(cornerRadius[2] || 0, width / 2, height / 2);
-                  bottomLeft = Math.min(cornerRadius[3] || 0, width / 2, height / 2);
-              }
-              context.moveTo(topLeft, 0);
-              context.lineTo(width - topRight, 0);
-              context.arc(width - topRight, topRight, topRight, (Math.PI * 3) / 2, 0, false);
-              context.lineTo(width, height - bottomRight);
-              context.arc(width - bottomRight, height - bottomRight, bottomRight, 0, Math.PI / 2, false);
-              context.lineTo(bottomLeft, height);
-              context.arc(bottomLeft, height - bottomLeft, bottomLeft, Math.PI / 2, Math.PI, false);
-              context.lineTo(0, topLeft);
-              context.arc(topLeft, topLeft, topLeft, Math.PI, (Math.PI * 3) / 2, false);
+              Util.drawRoundedRectPath(context, width, height, cornerRadius);
           }
           context.closePath();
           context.fillStrokeShape(this);
@@ -13460,14 +13503,13 @@
                   spacesNumber = text.split(' ').length - 1;
                   oneWord = spacesNumber === 0;
                   lineWidth =
-                      align === JUSTIFY && lastLine && !oneWord
-                          ? totalWidth - padding * 2
-                          : width;
+                      align === JUSTIFY && !lastLine ? totalWidth - padding * 2 : width;
                   context.lineTo(lineTranslateX + Math.round(lineWidth), translateY + lineTranslateY + Math.round(fontSize / 2));
                   // I have no idea what is real ratio
                   // just /15 looks good enough
                   context.lineWidth = fontSize / 15;
-                  context.strokeStyle = fill;
+                  const gradient = this._getLinearGradient();
+                  context.strokeStyle = gradient || fill;
                   context.stroke();
                   context.restore();
               }
@@ -13483,7 +13525,8 @@
                           : width;
                   context.lineTo(lineTranslateX + Math.round(lineWidth), translateY + lineTranslateY);
                   context.lineWidth = fontSize / 15;
-                  context.strokeStyle = fill;
+                  const gradient = this._getLinearGradient();
+                  context.strokeStyle = gradient || fill;
                   context.stroke();
                   context.restore();
               }
@@ -13589,7 +13632,8 @@
               normalizeFontFamily(this.fontFamily()));
       }
       _addTextLine(line) {
-          if (this.align() === JUSTIFY) {
+          const align = this.align();
+          if (align === JUSTIFY) {
               line = line.trim();
           }
           var width = this._getTextWidth(line);
@@ -13709,11 +13753,11 @@
                   }
               }
               // if element height is fixed, abort if adding one more line would overflow
-              if (fixedHeight && currentHeightPx + lineHeightPx > maxHeightPx) {
-                  break;
-              }
               if (this.textArr[this.textArr.length - 1]) {
                   this.textArr[this.textArr.length - 1].lastInParagraph = true;
+              }
+              if (fixedHeight && currentHeightPx + lineHeightPx > maxHeightPx) {
+                  break;
               }
           }
           this.textHeight = fontSize;
@@ -15657,6 +15701,11 @@
       // we will recreate inner nodes manually
       toObject() {
           return Node.prototype.toObject.call(this);
+      }
+      // overwrite clone to NOT use method from Container
+      clone(obj) {
+          var node = Node.prototype.clone.call(this, obj);
+          return node;
       }
       getClientRect() {
           if (this.nodes().length > 0) {

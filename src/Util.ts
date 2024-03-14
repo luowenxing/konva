@@ -1,4 +1,5 @@
 import { Konva } from './Global';
+import { Context } from './Context';
 import { IRect, RGB, RGBA, Vector2d } from './types';
 
 /*
@@ -609,7 +610,9 @@ export const Util = {
     return (
       Util._namedColorToRBA(str) ||
       Util._hex3ColorToRGBA(str) ||
+      Util._hex4ColorToRGBA(str) ||
       Util._hex6ColorToRGBA(str) ||
+      Util._hex8ColorToRGBA(str) ||
       Util._rgbColorToRGBA(str) ||
       Util._rgbaColorToRGBA(str) ||
       Util._hslColorToRGBA(str)
@@ -659,6 +662,17 @@ export const Util = {
       };
     }
   },
+  // Parse #nnnnnnnn
+  _hex8ColorToRGBA(str: string): RGBA {
+    if (str[0] === '#' && str.length === 9) {
+      return {
+        r: parseInt(str.slice(1, 3), 16),
+        g: parseInt(str.slice(3, 5), 16),
+        b: parseInt(str.slice(5, 7), 16),
+        a: parseInt(str.slice(7, 9), 16) / 0xff,
+      };
+    }
+  },
   // Parse #nnnnnn
   _hex6ColorToRGBA(str: string): RGBA {
     if (str[0] === '#' && str.length === 7) {
@@ -667,6 +681,17 @@ export const Util = {
         g: parseInt(str.slice(3, 5), 16),
         b: parseInt(str.slice(5, 7), 16),
         a: 1,
+      };
+    }
+  },
+  // Parse #nnnn
+  _hex4ColorToRGBA(str: string): RGBA {
+    if (str[0] === '#' && str.length === 5) {
+      return {
+        r: parseInt(str[1] + str[1], 16),
+        g: parseInt(str[2] + str[2], 16),
+        b: parseInt(str[3] + str[3], 16),
+        a: parseInt(str[4] + str[4], 16) / 0xff,
       };
     }
   },
@@ -965,7 +990,52 @@ export const Util = {
       c.height = 0;
     })
   },
-  isNaN(num: unknown) {
-    return num !== num;
+  drawRoundedRectPath(context: Context, width: number, height: number, cornerRadius: number | number[]) {
+    let topLeft = 0;
+    let topRight = 0;
+    let bottomLeft = 0;
+    let bottomRight = 0;
+    if (typeof cornerRadius === 'number') {
+      topLeft = topRight = bottomLeft = bottomRight = Math.min(
+        cornerRadius,
+        width / 2,
+        height / 2
+      );
+    } else {
+      topLeft = Math.min(cornerRadius[0] || 0, width / 2, height / 2);
+      topRight = Math.min(cornerRadius[1] || 0, width / 2, height / 2);
+      bottomRight = Math.min(cornerRadius[2] || 0, width / 2, height / 2);
+      bottomLeft = Math.min(cornerRadius[3] || 0, width / 2, height / 2);
+    }
+    context.moveTo(topLeft, 0);
+    context.lineTo(width - topRight, 0);
+    context.arc(
+      width - topRight,
+      topRight,
+      topRight,
+      (Math.PI * 3) / 2,
+      0,
+      false
+    );
+    context.lineTo(width, height - bottomRight);
+    context.arc(
+      width - bottomRight,
+      height - bottomRight,
+      bottomRight,
+      0,
+      Math.PI / 2,
+      false
+    );
+    context.lineTo(bottomLeft, height);
+    context.arc(
+      bottomLeft,
+      height - bottomLeft,
+      bottomLeft,
+      Math.PI / 2,
+      Math.PI,
+      false
+    );
+    context.lineTo(0, topLeft);
+    context.arc(topLeft, topLeft, topLeft, Math.PI, (Math.PI * 3) / 2, false);
   }
 };

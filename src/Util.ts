@@ -2,6 +2,13 @@ import { Konva } from './Global';
 import { Context } from './Context';
 import { IRect, RGB, RGBA, Vector2d } from './types';
 
+export interface IViewPort {
+  viewportX: number;
+  viewportY: number;
+  viewportW: number;
+  viewportH: number;
+}
+
 /*
  * Last updated November 2011
  * By Simon Sarris
@@ -1037,5 +1044,133 @@ export const Util = {
     );
     context.lineTo(0, topLeft);
     context.arc(topLeft, topLeft, topLeft, Math.PI, (Math.PI * 3) / 2, false);
-  }
+  },
+  isValidViewport(viewport: IViewPort) {
+    return viewport.viewportX >= 0 && viewport.viewportY >= 0 && viewport.viewportW >= 0 && viewport.viewportH >= 0;
+  },
+  calcReuseViewport(viewport: IViewPort, deltaX: number, deltaY: number): {
+    src: IViewPort;
+    dst: IViewPort;
+    diff: IViewPort[];
+  } | undefined {
+    const { viewportX, viewportY, viewportW, viewportH } = viewport;
+    const diff: IViewPort[] = [];
+
+    const absDeltaY = Math.abs(deltaY);
+    const absDeltaX = Math.abs(deltaX);
+
+    if (deltaX > 0 && deltaY > 0) {
+      const src = {
+        viewportX: absDeltaX,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const dst = {
+        viewportX: 0,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY
+      };
+      const diff = [{
+        viewportX: viewportX + Math.max(absDeltaX, viewportW),
+        viewportY: viewportY + absDeltaY,
+        viewportW: Math.min(absDeltaX, viewportW),
+        viewportH: viewportH,
+      }, {
+        viewportX: viewportX + absDeltaX,
+        viewportY: viewportY + Math.max(viewportH, absDeltaY),
+        viewportW: viewportW,
+        viewportH: Math.min(absDeltaY, viewportH),
+      }];
+      return { src, dst, diff };
+    } else if (deltaX > 0 && deltaY <= 0) {
+      const src = {
+        viewportX: absDeltaX,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const dst = {
+        viewportX: 0,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY
+      };
+      const diff = [{
+        viewportX: viewportX + Math.max(viewportW, absDeltaX),
+        viewportY: viewportY -  absDeltaY,
+        viewportW: Math.min(viewportW, absDeltaX),
+        viewportH: viewportH,
+      }];
+      if (deltaY !== 0) {
+        diff.push({
+          viewportX: viewportX + absDeltaX,
+          viewportY: viewportY -  absDeltaY,
+          viewportW,
+          viewportH: Math.min(viewportH, absDeltaY),
+        });
+      }
+      return { src, dst, diff };
+    } else if (deltaX <= 0 && deltaY > 0) {
+      const src = {
+        viewportX: 0,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const dst = {
+        viewportX: absDeltaX,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const diff = [{
+        viewportX: viewportX - absDeltaX,
+        viewportY: viewportY + Math.max(absDeltaY, viewportH),
+        viewportW: viewportW,
+        viewportH: Math.min(absDeltaY, viewportH),
+      }];
+      if (deltaX !== 0) {
+        diff.push({
+          viewportX: viewportX - absDeltaX,
+          viewportY: viewportY + absDeltaY,
+          viewportW: Math.min(viewportW, absDeltaX),
+          viewportH: viewportH,
+        });
+      }
+      return { src, dst, diff };
+    } else if (deltaX <=0 && deltaY <= 0) {
+      const src = {
+        viewportX: 0,
+        viewportY: 0,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY
+      };
+      const dst = {
+        viewportX: absDeltaX,
+        viewportY: absDeltaY,
+        viewportW: viewportW - absDeltaX,
+        viewportH:  viewportH - absDeltaY,
+      };
+      const diff: IViewPort[] = [];
+      if (deltaX !== 0) {
+        diff.push({
+          viewportX: viewportX - absDeltaX,
+          viewportY: viewportY - absDeltaY,
+          viewportW: Math.min(viewportW, absDeltaX),
+          viewportH: viewportH,
+        });
+      }
+      if (deltaY !== 0) {
+        diff.push({
+          viewportX: viewportX - absDeltaX,
+          viewportY: viewportY - absDeltaY,
+          viewportW: viewportW,
+          viewportH: Math.min(viewportH, absDeltaY),
+        });
+      }
+      return { src, dst, diff };
+    }
+  },
 };

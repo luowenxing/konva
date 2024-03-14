@@ -31,12 +31,14 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
     dst: IViewPort; 
     diff: IViewPort[];
   } | undefined;
+  private incrementalDraw: boolean;
 
   private viewportChildren: (viewport: IViewPort) => Shape[];
 
   constructor(props) {
     super(props);
     this.viewportChildren = props.viewportChildren;
+    this.incrementalDraw = props.incrementalDraw;
   }
 
   private getViewport() {
@@ -50,15 +52,14 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
 
   moveViewport(deltaX: number, deltaY: number) {
     const viewport = this.getViewport();
-    this.reuseViewport = Util.calcReuseViewport(viewport, deltaX, deltaY);
-
-    console.log(`reuse viewport: ${JSON.stringify(this.reuseViewport)}`);
+    this.reuseViewport = this.incrementalDraw ? Util.calcReuseViewport(viewport, deltaX, deltaY) : undefined;
 
     Konva.autoDrawEnabled = false;
-    this.viewportX(viewport.viewportX + deltaX);
-    this.viewportY(viewport.viewportY + deltaY);
+    this.viewportX(Math.max(0, viewport.viewportX + deltaX));
+    this.viewportY(Math.max(0, viewport.viewportY + deltaY));
     Konva.autoDrawEnabled = true;
     this.getLayer()?.draw();
+    this.reuseViewport = undefined;
   }
 
 
@@ -77,6 +78,8 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
   }
 
   _drawChildren(drawMethod, canvas, top, bufferCanvas?) {
+    const viewport = this.getViewport();
+    const { viewportX, viewportY, viewportW, viewportH } = viewport;
     var context = canvas && canvas.getContext(),
       clipWidth = this.clipWidth(),
       clipHeight = this.clipHeight(),
@@ -85,6 +88,7 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
         (typeof clipWidth === 'number' && typeof clipHeight === 'number') ||
         clipFunc;
 
+    const { pixelRatio } = canvas;
     const selfCache = top === this;
 
     if (hasClip) {
@@ -116,7 +120,6 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
       context._applyGlobalCompositeOperation(this);
     }
     
-    const viewport = this.getViewport();
     const viewports: IViewPort[] = [];
     if (this.reuseViewport) {
       const { diff } = this.reuseViewport;
@@ -136,35 +139,55 @@ export class ViewPortGroup extends Container<ViewPortGroup | Shape> {
       })
     })
 
-    console.log(`incremental draw children count: ${children.length}`);
+    // clip viewport
+    const x = this.x() + viewportX;
+    const y = this.y() + viewportY;
+    context.save();
+    context.beginPath();
+    context.rect(x, y, viewportW, viewportH);
+    context.clip();
 
     children.forEach(function (child) {
       child[drawMethod](canvas, top, bufferCanvas);
     });
-    if (hasComposition) {
-      context.restore();
+
+    if (this.reuseViewport) {
+      const { src, dst } = this.reuseViewport;
+      if (Util.isValidViewport(src) && Util.isValidViewport(dst)) {
+        let { viewportX: srcX, viewportY: srcY, viewportW: srcW, viewportH: srcH } = src;
+        let { viewportX: dstX, viewportY: dstY, viewportW: dstW, viewportH: dstH  } = dst;
+        // 因为这里的xy已经被override了
+        const x = this.x() + viewportX;
+        const y = this.y() + viewportY;
+        srcX += x;
+        dstX += x;
+        srcY += y;
+        dstY += y;
+        const { _cacheCanvas } = canvas;
+        context.save()
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        const srcRect = [srcX * pixelRatio, srcY * pixelRatio, srcW * pixelRatio, srcH * pixelRatio];
+        const dstRect = [dstX * pixelRatio, dstY * pixelRatio, dstW * pixelRatio, dstH * pixelRatio];
+        context.clearRect(dstRect[0], dstRect[1], dstRect[2], dstRect[3]);
+        context.drawImage(_cacheCanvas,
+          srcRect[0], srcRect[1], srcRect[2], srcRect[3],
+          dstRect[0], dstRect[1], dstRect[2], dstRect[3],
+        )
+        context.restore();
+      }
     }
 
     if (hasClip) {
       context.restore();
     }
 
-    if (this.reuseViewport) {
-      const { src, dst } = this.reuseViewport;
-      if (Util.isValidViewport(src) && Util.isValidViewport(dst)) {
-        const { viewportX: srcX, viewportY: srcY, viewportW: srcW, viewportH: srcH } = src;
-        const { viewportX: dstX, viewportY: dstY, viewportW: dstW, viewportH: dstH  } = dst;
-        const { _cacheCanvas, pixelRatio } = canvas;
-        context.save()
-        context.setTransform(1, 0, 0, 1, 0, 0);
-        context.drawImage(_cacheCanvas,
-          srcX * pixelRatio, srcY * pixelRatio, srcW * pixelRatio, srcH * pixelRatio,
-          dstX * pixelRatio, dstY * pixelRatio, dstW * pixelRatio, dstH * pixelRatio,
-        )
-        context.restore();
-      }
-      this.reuseViewport = undefined;
+    if (hasComposition) {
+      context.restore();
     }
+
+    // restore clip viewport
+    context.restore();
+    
   }
 
 }

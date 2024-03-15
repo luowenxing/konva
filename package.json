@@ -9,10 +9,9 @@
     "lib",
     "cmj"
   ],
-  "main": "./cmj/index-node.js",
+  "main": "./lib/index.js",
   "browser": "./lib/index.js",
   "typings": "./lib/index-types.d.ts",
-  "type": "module",
   "__ignore_exports": {
     ".": {
       "node": {
@@ -43,7 +42,7 @@
   },
   "scripts": {
     "start": "npm run test:watch",
-    "compile": "npm run clean && npm run tsc && cp ./src/index-types.d.ts ./lib/index-types.d.ts && npm run rollup && cp ./package-cmj.json ./cmj/package.json && cp ./src/index-types.d.ts ./cmj/index-types.d.ts",
+    "compile": "npm run clean && npm run tsc && cp ./src/index-types.d.ts ./lib/index-types.d.ts",
     "build": "npm run compile && cp ./src/index-types.d.ts ./lib && gulp build && node ./rename-imports.mjs",
     "test:import": "npm run build  && node ./test/import-test.cjs &&node ./test/import-test.mjs",
     "test": "npm run test:browser && npm run test:node",
@@ -51,11 +50,13 @@
     "test:browser": "npm run test:build && mocha-headless-chrome -f ./test-build/unit-tests.html -a disable-web-security",
     "test:node": "ts-mocha -p ./test/tsconfig.json test/unit/**/*.ts --exit && npm run test:import",
     "test:watch": "rm -rf ./parcel-cache && parcel serve ./test/unit-tests.html ./test/manual-tests.html ./test/sandbox.html",
-    "tsc": "tsc --removeComments && tsc --build ./tsconfig-cmj.json",
+    "tsc": "tsc --removeComments",
     "rollup": "rollup -c --bundleConfigAsCjs",
     "clean": "rm -rf ./lib && rm -rf ./types && rm -rf ./cmj && rm -rf ./test-build",
     "watch": "rollup -c -w",
-    "size": "size-limit"
+    "size": "size-limit",
+    "publish:patch": "npm version patch && npm run build && npm publish && git push --follow-tags",
+    "publish:beta": "npm version prerelease --preid beta && npm run build && npm publish --tag=beta && git push --follow-tags"
   },
   "targets": {
     "none": {}
@@ -135,7 +136,7 @@
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "git://github.com/konvajs/konva.git"
+    "url": "git@git.woa.com:tencent-docs-next/konva.git"
   },
   "license": "MIT"
 }

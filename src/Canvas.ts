@@ -94,8 +94,8 @@ export class Canvas {
   }
   setWidth(width) {
     // take into account pixel ratio
-    this.width = this._canvas.width = width * this.pixelRatio;
-    this._canvas.style.width = width + 'px';
+    this.width = this._canvas.width = Math.round(width * this.pixelRatio);
+    this._canvas.style.width = this.width / this.pixelRatio + 'px';
 
     var pixelRatio = this.pixelRatio,
       _context = this.getContext()._context;
@@ -103,8 +103,8 @@ export class Canvas {
   }
   setHeight(height) {
     // take into account pixel ratio
-    this.height = this._canvas.height = height * this.pixelRatio;
-    this._canvas.style.height = height + 'px';
+    this.height = this._canvas.height = Math.round(height * this.pixelRatio);
+    this._canvas.style.height = this.height / this.pixelRatio + 'px';
     var pixelRatio = this.pixelRatio,
       _context = this.getContext()._context;
     _context.scale(pixelRatio, pixelRatio);

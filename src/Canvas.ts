@@ -47,7 +47,6 @@ interface ICanvasConfig {
 export class Canvas {
   pixelRatio = 1;
   _canvas: HTMLCanvasElement;
-  _cacheCanvas: HTMLCanvasElement;
   context: Context;
   width = 0;
   height = 0;
@@ -61,20 +60,16 @@ export class Canvas {
       conf.pixelRatio || Konva.pixelRatio || getDevicePixelRatio();
 
     this.pixelRatio = pixelRatio;
-    this.createCanvas('_canvas');
-    this.createCanvas('_cacheCanvas');
-  }
 
-  private createCanvas(prop: '_canvas' | '_cacheCanvas') {
-    this[prop] = Util.createCanvasElement();
+    this._canvas = Util.createCanvasElement();
     // set inline styles
-    this[prop].style.padding = '0';
-    this[prop].style.margin = '0';
-    this[prop].style.border = '0';
-    this[prop].style.background = 'transparent';
-    this[prop].style.position = 'absolute';
-    this[prop].style.top = '0';
-    this[prop].style.left = '0';
+    this._canvas.style.padding = '0';
+    this._canvas.style.margin = '0';
+    this._canvas.style.border = '0';
+    this._canvas.style.background = 'transparent';
+    this._canvas.style.position = 'absolute';
+    this._canvas.style.top = '0';
+    this._canvas.style.left = '0';
   }
 
   /**
@@ -105,10 +100,6 @@ export class Canvas {
     var pixelRatio = this.pixelRatio,
       _context = this.getContext()._context;
     _context.scale(pixelRatio, pixelRatio);
-
-    // cache canvas
-    this._cacheCanvas.width = width * this.pixelRatio;
-    this._cacheCanvas.style.width = width + 'px';
   }
   setHeight(height) {
     // take into account pixel ratio
@@ -117,10 +108,6 @@ export class Canvas {
     var pixelRatio = this.pixelRatio,
       _context = this.getContext()._context;
     _context.scale(pixelRatio, pixelRatio);
-
-    // cache canvas
-    this._cacheCanvas.height = height * this.pixelRatio;
-    this._cacheCanvas.style.height = height + 'px';
   }
   getWidth() {
     return this.width;

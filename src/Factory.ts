@@ -20,15 +20,6 @@ export const Factory = {
         return val === undefined ? def : val;
       };
   },
-  overrideGetter(constructor, attr, def?, getter?) {
-    var method = GET + Util._capitalize(attr);
-    constructor.prototype[method] = function (this: Node) {
-      var val = this.attrs[attr];
-      const result = val === undefined ? def : val;
-      return getter ? getter.call(this, result) : result;
-    };
-  },
-
 
   addSetter(constructor, attr, validator?, after?) {
     var method = SET + Util._capitalize(attr);

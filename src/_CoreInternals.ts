@@ -12,8 +12,6 @@ import { FastLayer } from './FastLayer';
 
 import { Group } from './Group';
 
-import { ViewPortGroup } from './ViewPortGroup';
-
 import { DD } from './DragAndDrop';
 
 import { Shape, shapes } from './Shape';
@@ -34,7 +32,6 @@ export const Konva = Util._assign(Global, {
   Layer,
   FastLayer,
   Group,
-  ViewPortGroup,
   DD,
   Shape,
   shapes,

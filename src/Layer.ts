@@ -298,8 +298,8 @@ export class Layer extends Container<Group | Shape> {
     if (!this._waitingForDraw) {
       this._waitingForDraw = true;
       Util.requestAnimFrame(() => {
-        this.draw();
         this._waitingForDraw = false;
+        this.draw();
       });
     }
     return this;

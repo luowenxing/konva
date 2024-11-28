@@ -298,15 +298,8 @@ export class Layer extends Container<Group | Shape> {
     if (!this._waitingForDraw) {
       this._waitingForDraw = true;
       Util.requestAnimFrame(() => {
-        try {
-          // 用 try 包住，避免 this.draw 渲染失败后，后面这个 layer 就一直停留在 _waitingForDraw 状态
-          this.draw();
-        } catch (e) {
-          // continue to throw it out
-          throw e; 
-        } finally {
-          this._waitingForDraw = false;
-        }
+        this._waitingForDraw = false;
+        this.draw();
       });
     }
     return this;

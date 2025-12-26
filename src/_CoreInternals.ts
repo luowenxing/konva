@@ -14,6 +14,8 @@ import { Group } from './Group.ts';
 
 import { DD } from './DragAndDrop.ts';
 
+import { ViewPortGroup } from './ViewPortGroup.ts';
+
 import { Shape, shapes } from './Shape.ts';
 
 import { Animation } from './Animation.ts';
@@ -32,6 +34,7 @@ export const Konva = Util._assign(Global, {
   Layer,
   FastLayer,
   Group,
+  ViewPortGroup,
   DD,
   Shape,
   shapes,

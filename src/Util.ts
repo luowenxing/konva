@@ -22,6 +22,13 @@ const ensureBrowser = () => {
   }
 };
 
+export interface IViewPort {
+  viewportX: number;
+  viewportY: number;
+  viewportW: number;
+  viewportH: number;
+}
+
 /*
  * Last updated November 2011
  * By Simon Sarris

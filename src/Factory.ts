@@ -77,6 +77,15 @@ export const Factory = {
         return val === undefined ? def : val;
       };
   },
+  overrideGetter(constructor, attr, def?, getter?) {
+    var method = GET + Util._capitalize(attr);
+    constructor.prototype[method] = function () {
+      var val = this.attrs[attr];
+      const result = val === undefined ? def : val;
+      return getter ? getter.call(this, result) : result;
+    };
+  },
+
 
   addSetter<T extends Constructor, U extends Attr<T>>(
     constructor: T,

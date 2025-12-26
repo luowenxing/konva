@@ -17,6 +17,7 @@ export interface LayerConfig extends ContainerConfig {
   clearBeforeDraw?: boolean;
   hitGraphEnabled?: boolean;
   imageSmoothingEnabled?: boolean;
+  incrementalDraw?: boolean;
 }
 
 // constants
@@ -397,6 +398,12 @@ export class Layer extends Container<Group | Shape> {
     });
 
     if (this.clearBeforeDraw()) {
+      const { _canvas, _cacheCanvas } = canvas;
+      if (_canvas.width && _canvas.height && this.attrs.incrementalDraw) {
+        const cacheContext = _cacheCanvas.getContext('2d');
+        cacheContext.clearRect(0, 0, _canvas.width, _canvas.height);
+        cacheContext?.drawImage(_canvas, 0, 0, _canvas.width, _canvas.height);
+      }
       canvas.getContext().clear();
     }
 

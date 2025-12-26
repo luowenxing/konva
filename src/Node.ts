@@ -142,7 +142,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     [index: string]: Array<{ name: string; handler: Function }>;
   } = {};
   attrs: any = {};
-  index = 0;
   _allEventListeners: null | Array<Function> = null;
   parent: Container<Node> | null = null;
   _cache: Map<string, any> = new Map<string, any>();
@@ -159,6 +158,17 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
 
   _dragEventId: number | null = null;
   _shouldFireChangeEvents = false;
+
+  get index() {
+    if (this.parent) {
+      return this.parent.children.indexOf(this);
+    }
+    return 0;
+  }
+
+  set index(_val: number) {
+
+  }
 
   constructor(config?: Config) {
     // on initial set attrs wi don't need to fire change events
@@ -844,7 +854,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
 
     if (parent && parent.children) {
       parent.children.splice(this.index, 1);
-      parent._setChildrenIndices();
       this.parent = null;
     }
   }
@@ -1348,7 +1357,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     if (index < len - 1) {
       this.parent.children.splice(index, 1);
       this.parent.children.push(this);
-      this.parent._setChildrenIndices();
       return true;
     }
     return false;
@@ -1369,7 +1377,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     if (index < len - 1) {
       this.parent.children.splice(index, 1);
       this.parent.children.splice(index + 1, 0, this);
-      this.parent._setChildrenIndices();
       return true;
     }
     return false;
@@ -1389,7 +1396,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     if (index > 0) {
       this.parent.children.splice(index, 1);
       this.parent.children.splice(index - 1, 0, this);
-      this.parent._setChildrenIndices();
       return true;
     }
     return false;
@@ -1409,7 +1415,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     if (index > 0) {
       this.parent.children.splice(index, 1);
       this.parent.children.unshift(this);
-      this.parent._setChildrenIndices();
       return true;
     }
     return false;
@@ -1431,7 +1436,6 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     var index = this.index;
     this.parent.children.splice(index, 1);
     this.parent.children.splice(zIndex, 0, this);
-    this.parent._setChildrenIndices();
     return this;
   }
   /**
@@ -2314,8 +2318,11 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     }
   }
 
+  static protoListenerMap = new Map<string, any>();
+  
   _getProtoListeners(eventType) {
-    let listeners = this._cache.get(ALL_LISTENERS);
+    const { className } = this;
+    let listeners = Node.protoListenerMap.get(className);
     // if no cache for listeners, we need to pre calculate it
     if (!listeners) {
       listeners = {};
@@ -2325,15 +2332,17 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
           obj = Object.getPrototypeOf(obj);
           continue;
         }
-        for (var event in obj.eventListeners) {
-          const newEvents = obj.eventListeners[event];
-          const oldEvents = listeners[event] || [];
-
-          listeners[event] = newEvents.concat(oldEvents);
+        if (obj.hasOwnProperty('eventListeners')) {
+          for (var event in obj.eventListeners) {
+            const newEvents = obj.eventListeners[event];
+            const oldEvents = listeners[event] || [];
+  
+            listeners[event] = newEvents.concat(oldEvents);
+          }
         }
         obj = Object.getPrototypeOf(obj);
       }
-      this._cache.set(ALL_LISTENERS, listeners);
+      Node.protoListenerMap.set(className, listeners);
     }
 
     return listeners[eventType];
@@ -2354,8 +2363,10 @@ export abstract class Node<Config extends NodeConfig = NodeConfig> {
     // because events can be added/removed while firing
     const selfListeners = this.eventListeners[eventType];
     if (selfListeners) {
-      for (var i = 0; i < selfListeners.length; i++) {
-        selfListeners[i].handler.call(this, evt);
+      // need to slice to prevent remove listenr from event
+      const lisenters = selfListeners.slice();
+      for (var i = 0; i < lisenters.length; i++) {
+        lisenters[i].handler.call(this, evt);
       }
     }
   }

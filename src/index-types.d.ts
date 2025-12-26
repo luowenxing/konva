@@ -85,6 +85,10 @@ declare namespace Konva {
   export type Group = import('./Group').Group;
   export type GroupConfig = import('./Group').GroupConfig;
 
+  export const ViewPortGroup: typeof import('./ViewPortGroup').ViewPortGroup;
+  export type ViewPortGroup = import('./ViewPortGroup').ViewPortGroup;
+  export type ViewPortGroupConfig = import('./ViewPortGroup').ViewPortGroupConfig;
+
   export const DD: typeof import('./DragAndDrop').DD;
 
   export const Shape: typeof import('./Shape').Shape;

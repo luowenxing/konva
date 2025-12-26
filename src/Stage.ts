@@ -12,6 +12,7 @@ import * as PointerEvents from './PointerEvents';
 
 export interface StageConfig extends ContainerConfig {
   container: HTMLDivElement | string;
+  noDrawAfterResize?: boolean;
 }
 
 // CONSTANTS
@@ -395,7 +396,7 @@ export class Stage extends Container<Layer> {
     // set layer dimensions
     this.children.forEach((layer) => {
       layer.setSize({ width, height });
-      layer.draw();
+      !this.attrs.noDrawAfterResize && layer.draw();
     });
   }
   add(layer: Layer, ...rest) {
